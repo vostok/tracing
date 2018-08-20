@@ -1,4 +1,5 @@
 ﻿using System;
+using Vostok.Commons.Collections;
 using Vostok.Context;
 using Vostok.Tracing.Abstractions;
 
@@ -8,6 +9,8 @@ namespace Vostok.Tracing
     {
         private const string DistributedGlobalName = "vostok.tracing.context";
 
+        private UnboundedObjectPool<Span> objectPool;
+
         static Tracer()
         {
             FlowingContext.Configuration.RegisterDistributedGlobal(DistributedGlobalName, new TraceContextSerializer());
@@ -16,6 +19,7 @@ namespace Vostok.Tracing
         public Tracer(TraceConfiguration traceConfiguration)
         {
             TraceConfiguration = traceConfiguration;
+            objectPool = new UnboundedObjectPool<Span>(() => new Span());
         }
 
         public TraceConfiguration TraceConfiguration { get; set; }
@@ -29,7 +33,7 @@ namespace Vostok.Tracing
         public ISpanBuilder BeginSpan()
         {
             var newScope = BeginContextScope();
-            return new SpanBuilder(newScope, TraceConfiguration.TraceReporter);
+            return new SpanBuilder(newScope, objectPool, TraceConfiguration.TraceReporter);
         }
 
         private TraceContextScope BeginContextScope()

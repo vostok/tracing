@@ -3,6 +3,7 @@ using System.Linq;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using Vostok.Commons.Collections;
 using Vostok.Context;
 using Vostok.Tracing.Abstractions;
 
@@ -10,11 +11,13 @@ namespace Vostok.Tracing.Tests
 {
     public class SpanBuilder_Tests
     {
+        private static int ind = 0;
         private readonly Guid traceId = Guid.NewGuid();
         private readonly Guid spanId = Guid.NewGuid();
         private readonly Guid parentSpanId = Guid.NewGuid();
         private ISpanBuilder spanBuilder;
         private ITraceReporter traceReporter;
+        private UnboundedObjectPool<Span> objectPool;
 
         private ISpan observedSpan;
 
@@ -31,6 +34,30 @@ namespace Vostok.Tracing.Tests
             return traceContextScope;
         }
 
+        private static Span CloneSpan(ISpan span)
+        {
+            var clonedSpan = new Span()
+            {
+                TraceId = span.TraceId,
+                SpanId = span.SpanId,
+                ParentSpanId = span.ParentSpanId,
+                BeginTimestamp = span.BeginTimestamp,
+                EndTimestamp = span.EndTimestamp
+            };
+            foreach (var x in span.Annotations)
+            {
+                clonedSpan.AddAnnotation(x.Key, x.Value);
+            }
+
+            return clonedSpan;
+        }
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
+        {
+            objectPool = new UnboundedObjectPool<Span>(() => new Span());
+        }
+
         [SetUp]
         public void SetUp()
         {
@@ -42,13 +69,13 @@ namespace Vostok.Tracing.Tests
 
             traceReporter
                 .When(r => r.SendSpan(Arg.Any<ISpan>()))
-                .Do(info => observedSpan = info.Arg<ISpan>());
+                .Do(info => observedSpan = CloneSpan(info.Arg<ISpan>()));
         }
 
         [Test]
         public void Should_send_span()
         {
-            using (spanBuilder = new SpanBuilder(CreateTraceContextScope(), traceReporter))
+            using (spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceReporter))
             {
             }
 
@@ -58,7 +85,7 @@ namespace Vostok.Tracing.Tests
         [Test]
         public void Should_send_span_with_endtimestamp_when_span_is_not_endless()
         {
-            using (spanBuilder = new SpanBuilder(CreateTraceContextScope(), traceReporter))
+            using (spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceReporter))
             {
             }
 
@@ -68,7 +95,7 @@ namespace Vostok.Tracing.Tests
         [Test]
         public void Should_send_span_without_endtimestamp_when_span_is_endless()
         {
-            using (spanBuilder = new SpanBuilder(CreateTraceContextScope(), traceReporter))
+            using (spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceReporter))
             {
                 spanBuilder.IsEndless = true;
             }
@@ -81,7 +108,7 @@ namespace Vostok.Tracing.Tests
         {
             var traceContextScope = CreateTraceContextScope();
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, traceReporter))
+            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
             {
             }
 
@@ -99,7 +126,7 @@ namespace Vostok.Tracing.Tests
             Assert.Throws<Exception>(
                 () =>
                 {
-                    using (spanBuilder = new SpanBuilder(traceContextScope, traceReporter))
+                    using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
                     {
                     }
                 });
@@ -113,7 +140,7 @@ namespace Vostok.Tracing.Tests
         {
             var traceContextScope = CreateTraceContextScope(parentSpanId: parentSpanId);
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, traceReporter))
+            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
             {
             }
 
@@ -125,7 +152,7 @@ namespace Vostok.Tracing.Tests
         {
             var traceContextScope = CreateTraceContextScope(traceId, spanId);
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, traceReporter))
+            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
             {
             }
 
@@ -138,7 +165,7 @@ namespace Vostok.Tracing.Tests
         {
             var traceContextScope = CreateTraceContextScope();
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, traceReporter))
+            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
             {
             }
 
@@ -151,7 +178,7 @@ namespace Vostok.Tracing.Tests
         {
             var traceContextScope = CreateTraceContextScope();
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, traceReporter))
+            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
             {
             }
 
@@ -166,7 +193,7 @@ namespace Vostok.Tracing.Tests
             const string customAnnotationKey = "key";
             const string customAnnotationValue = "value";
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, traceReporter))
+            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
             {
                 spanBuilder.SetAnnotation(customAnnotationKey, customAnnotationValue);
             }
@@ -185,7 +212,7 @@ namespace Vostok.Tracing.Tests
 
             var timestamp = new DateTimeOffset(2018, 07, 09, 09, 0, 0, new TimeSpan(5, 0, 0));
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, traceReporter))
+            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
             {
                 spanBuilder.SetBeginTimestamp(timestamp);
             }
@@ -200,7 +227,7 @@ namespace Vostok.Tracing.Tests
 
             var timestamp = new DateTimeOffset(2018, 07, 09, 09, 0, 0, new TimeSpan(5, 0, 0));
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, traceReporter))
+            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
             {
                 spanBuilder.SetEndTimestamp(timestamp);
             }

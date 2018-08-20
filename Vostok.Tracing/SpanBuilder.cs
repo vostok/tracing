@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using Vostok.Commons.Collections;
 using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
@@ -8,18 +8,20 @@ namespace Vostok.Tracing
     internal class SpanBuilder : ISpanBuilder
     {
         private readonly TraceContextScope contextScope;
+        private readonly UnboundedObjectPool<Span> objectPool;
         private readonly ITraceReporter reporter;
         private readonly Span span;
         private readonly Stopwatch stopwatch;
 
-        public SpanBuilder(TraceContextScope contextScope, ITraceReporter reporter)
+        public SpanBuilder(TraceContextScope contextScope, UnboundedObjectPool<Span> objectPool, ITraceReporter reporter)
         {
             this.contextScope = contextScope;
+            this.objectPool = objectPool;
             this.reporter = reporter;
 
             stopwatch = Stopwatch.StartNew();
 
-            span = new Span();
+            span = objectPool.Acquire();
             InitializeSpan();
         }
 
@@ -49,6 +51,8 @@ namespace Vostok.Tracing
             }
             finally
             {
+                CleanupSpan();
+                objectPool.Return(span);
                 contextScope.Dispose();
             }
         }
@@ -65,6 +69,13 @@ namespace Vostok.Tracing
         {
             if (!IsEndless && !span.EndTimestamp.HasValue)
                 span.EndTimestamp = span.BeginTimestamp + stopwatch.Elapsed;
+        }
+
+        private void CleanupSpan()
+        {
+            span.ClearAnnotations();
+            span.ParentSpanId = null;
+            span.EndTimestamp = null;
         }
     }
 }

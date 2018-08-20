@@ -24,5 +24,10 @@ namespace Vostok.Tracing
         {
             annotations.Add(key, value);
         }
+
+        public void ClearAnnotations()
+        {
+            annotations.Clear();
+        }
     }
 }
