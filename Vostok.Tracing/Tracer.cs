@@ -42,7 +42,7 @@ namespace Vostok.Tracing
         private TraceContextScope BeginContextScope()
         {
             var oldContext = CurrentContext;
-            var newContext = new TraceContext(oldContext?.TraceId ?? Guid.NewGuid(), Guid.NewGuid());
+            var newContext = new TraceContext(oldContext?.TraceId ?? Guid.NewGuid(), Guid.NewGuid(), oldContext?.InheritAnnotations);
 
             CurrentContext = newContext;
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using Vostok.Commons.Collections;
+using Vostok.Context;
 using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
@@ -23,13 +24,24 @@ namespace Vostok.Tracing
 
             span = objectPool.Acquire();
             InitializeSpan();
+            AddAnnotationsFromParentTraceContext();
         }
 
         public bool IsEndless { get; set; }
 
-        public void SetAnnotation<TValue>(string key, TValue value)
+        public void SetAnnotation<TValue>(string key, TValue value, bool copyToChild = false)
         {
             span.AddAnnotation(key, value?.ToString());
+            if (copyToChild)
+            {
+                //will it work?
+                contextScope.Current.InheritAnnotations.Add(key, value?.ToString());
+
+                //maybe..
+                //var newContext = contextScope.Current;
+                //newContext.InheritAnnotations.Add(key, value?.ToString());
+                //FlowingContext.Globals.Set(newContext);
+            }
         }
 
         public void SetBeginTimestamp(DateTimeOffset timestamp)
@@ -63,6 +75,14 @@ namespace Vostok.Tracing
             span.SpanId = contextScope.Current.SpanId;
             span.ParentSpanId = contextScope.Parent?.SpanId;
             span.BeginTimestamp = DateTimeOffset.UtcNow;
+        }
+
+        private void AddAnnotationsFromParentTraceContext()
+        {
+            foreach (var currentInheritAnnotation in contextScope.Current.InheritAnnotations)
+            {
+                span.AddAnnotation(currentInheritAnnotation.Key, currentInheritAnnotation.Value);
+            }
         }
 
         private void FinalizeSpan()

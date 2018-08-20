@@ -138,5 +138,68 @@ namespace Vostok.Tracing.Tests
 
             observedSpan.Annotations.Should().HaveCountGreaterThan(0);
         }
+
+        [Test]
+        public void Multiple_layers_crazy_test()
+        {
+            var sendSpanCallsCount = 0;
+            traceReporter.SendSpan(
+                Arg.Do<Span>(
+                    x =>
+                    {
+                        if (sendSpanCallsCount == 0)
+                        {
+                            x.Annotations.Count.Should().Be(3);
+                        }
+
+                        if (sendSpanCallsCount == 1)
+                        {
+                            x.Annotations.Count.Should().Be(2);
+                        }
+
+                        if (sendSpanCallsCount == 2)
+                        {
+                            x.Annotations.Count.Should().Be(6);
+                        }
+
+                        if (sendSpanCallsCount == 3)
+                        {
+                            x.Annotations.Should().BeEmpty();
+                        }
+
+                        if (sendSpanCallsCount == 4)
+                        {
+                            x.Annotations.Should().BeEmpty();
+                        }
+
+                        sendSpanCallsCount++;
+                    }));
+
+            using (var superParentSpan = tracer.BeginSpan())
+            {
+                const string url = "https://git.skbkontur.ru/ke/core-infra/blob/master/Kontur.Core.Infra/Utilities/UrlNormalizer.cs";
+                using (var span1 = tracer.BeginHttpRequestClientSpan(new Uri(url), HttpMethod.Get, 312323))
+                {
+                    span1.SetAnnotation(AnnotationNames.Service, "my cool service", true);
+                    using (var span2 = tracer.BeginSpan())
+                    {
+                        span2.SetAnnotation("customkey", "123", true);
+                        using (var span3 = tracer.BeginSpan())
+                        {
+                            span3.SetAnnotation("deepkey", "");
+                            //#0
+                        }
+                        //#1
+                    }
+                    //#2
+                }
+                //#3
+            }
+
+            using (var otherSpan = tracer.BeginSpan())
+            {
+                //#4
+            }
+        }
     }
 }
