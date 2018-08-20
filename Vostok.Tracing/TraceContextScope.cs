@@ -3,6 +3,8 @@ using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
+    // CR(iloktionov): Convert to internal.
+
     public class TraceContextScope : IDisposable
     {
         internal TraceContextScope(ITraceContext current, ITraceContext parent)

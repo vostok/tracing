@@ -9,6 +9,8 @@ namespace Vostok.Tracing.Tests
         private ITraceReporter traceReporter;
         private ITracer tracer;
 
+        // private ISpan observedSpan;
+
         [SetUp]
         public void SetUp()
         {
@@ -16,6 +18,12 @@ namespace Vostok.Tracing.Tests
             var traceConfiguration = new TraceConfiguration();
             traceConfiguration.TraceReporter = traceReporter;
             tracer = new Tracer(traceConfiguration);
+
+            // observedSpan = null;
+
+            // traceReporter
+                // .When(r => r.SendSpan(Arg.Any<ISpan>()))
+                // .Do(info => observedSpan = info.Arg<ISpan>());
         }
 
         [Test]

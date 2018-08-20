@@ -5,6 +5,8 @@ using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
+    // CR(iloktionov): Convert to internal.
+
     public class SpanBuilder : ISpanBuilder
     {
         private readonly TraceContextScope contextScope;
@@ -12,8 +14,10 @@ namespace Vostok.Tracing
         private readonly Span span;
         private readonly Stopwatch stopwatch;
 
+        // CR(iloktionov): Just use Dictionary in Span instead.
         private readonly Dictionary<string, string> spanAnnotations = new Dictionary<string, string>();
 
+        // CR(iloktionov): Forgot to initialize BeginTimestamp.
         public SpanBuilder(TraceContextScope contextScope, ITraceReporter reporter)
         {
             this.contextScope = contextScope;

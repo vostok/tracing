@@ -3,6 +3,8 @@ using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
+    // CR(iloktionov): Remove ITraceContext and move TraceContext to abstractions module.
+
     public class TraceContext : ITraceContext
     {
         public TraceContext()

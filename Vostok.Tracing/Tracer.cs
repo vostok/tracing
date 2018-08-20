@@ -22,6 +22,10 @@ namespace Vostok.Tracing
             set => CurrentTraceContext = value;
         }
 
+        // CR(iloktionov): 1. Use FlowingContext.Globals instead of properties
+        // CR(iloktionov): 2. We probably shouldn't provide two ways to set context in public API (remove static property?)
+        // CR(iloktionov): 3. Register TraceContext as a distributed global in FlowingContext (and provide a serializer)
+
         public static ITraceContext CurrentTraceContext
         {
             get
