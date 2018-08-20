@@ -1,24 +1,26 @@
 ﻿using System;
+using Vostok.Context;
 using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
-    // CR(iloktionov): Convert to internal.
-
-    public class TraceContextScope : IDisposable
+    internal class TraceContextScope : IDisposable
     {
-        internal TraceContextScope(ITraceContext current, ITraceContext parent)
+        internal bool Disposed;
+
+        internal TraceContextScope(TraceContext current, TraceContext parent)
         {
             Current = current;
             Parent = parent;
         }
 
-        public ITraceContext Current { get; }
-        public ITraceContext Parent { get; }
+        public TraceContext Current { get; }
+        public TraceContext Parent { get; }
 
         public void Dispose()
         {
-            Tracer.CurrentTraceContext = Parent;
+            FlowingContext.Globals.Set(Parent);
+            Disposed = true;
         }
     }
 }

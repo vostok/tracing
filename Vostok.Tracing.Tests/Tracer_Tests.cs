@@ -1,4 +1,5 @@
-﻿using NSubstitute;
+﻿using FluentAssertions;
+using NSubstitute;
 using NUnit.Framework;
 using Vostok.Tracing.Abstractions;
 
@@ -9,8 +10,6 @@ namespace Vostok.Tracing.Tests
         private ITraceReporter traceReporter;
         private ITracer tracer;
 
-        // private ISpan observedSpan;
-
         [SetUp]
         public void SetUp()
         {
@@ -18,25 +17,44 @@ namespace Vostok.Tracing.Tests
             var traceConfiguration = new TraceConfiguration();
             traceConfiguration.TraceReporter = traceReporter;
             tracer = new Tracer(traceConfiguration);
-
-            // observedSpan = null;
-
-            // traceReporter
-                // .When(r => r.SendSpan(Arg.Any<ISpan>()))
-                // .Do(info => observedSpan = info.Arg<ISpan>());
         }
 
         [Test]
-        public void BeginSpan_should_send_spans()
+        public void CurrentContext_should_change_context_when_begin_child_span()
         {
             using (var span1 = tracer.BeginSpan())
             {
+                var span1Context = tracer.CurrentContext;
                 using (var span2 = tracer.BeginSpan())
                 {
+                    var span2Context = tracer.CurrentContext;
+
+                    span1Context.TraceId.Should().Be(span2Context.TraceId);
+                    span1Context.SpanId.Should().NotBe(span2Context.SpanId);
                 }
             }
+        }
 
-            traceReporter.Received(2).SendSpan(Arg.Any<Span>());
+        [Test]
+        public void CurrentContext_should_change_context_back_when_end_child_span()
+        {
+            using (var span1 = tracer.BeginSpan())
+            {
+                var span1ContextBeforeStartChildSpan = tracer.CurrentContext;
+
+                using (var span2 = tracer.BeginSpan())
+                {
+                    var span2Context = tracer.CurrentContext;
+
+                    span1ContextBeforeStartChildSpan.TraceId.Should().Be(span2Context.TraceId);
+                    span1ContextBeforeStartChildSpan.SpanId.Should().NotBe(span2Context.SpanId);
+                }
+
+                var span1ContextAfterStartChildSpan = tracer.CurrentContext;
+
+                span1ContextBeforeStartChildSpan.TraceId.Should().Be(span1ContextAfterStartChildSpan.TraceId);
+                span1ContextBeforeStartChildSpan.SpanId.Should().Be(span1ContextAfterStartChildSpan.SpanId);
+            }
         }
     }
 }

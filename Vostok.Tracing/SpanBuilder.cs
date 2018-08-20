@@ -5,39 +5,29 @@ using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
-    // CR(iloktionov): Convert to internal.
-
-    public class SpanBuilder : ISpanBuilder
+    internal class SpanBuilder : ISpanBuilder
     {
         private readonly TraceContextScope contextScope;
         private readonly ITraceReporter reporter;
         private readonly Span span;
         private readonly Stopwatch stopwatch;
 
-        // CR(iloktionov): Just use Dictionary in Span instead.
-        private readonly Dictionary<string, string> spanAnnotations = new Dictionary<string, string>();
-
-        // CR(iloktionov): Forgot to initialize BeginTimestamp.
         public SpanBuilder(TraceContextScope contextScope, ITraceReporter reporter)
         {
             this.contextScope = contextScope;
             this.reporter = reporter;
-            span = new Span
-            {
-                TraceId = contextScope.Current.TraceId,
-                SpanId = contextScope.Current.SpanId,
-                ParentSpanId = contextScope.Parent?.SpanId
-            };
-            stopwatch = new Stopwatch();
-            stopwatch.Start();
+
+            stopwatch = Stopwatch.StartNew();
+
+            span = new Span();
+            InitializeSpan();
         }
 
-        public bool IsCanceled { get; set; }
         public bool IsEndless { get; set; }
 
         public void SetAnnotation<TValue>(string key, TValue value)
         {
-            spanAnnotations[key] = value?.ToString();
+            span.AddAnnotation(key, value?.ToString());
         }
 
         public void SetBeginTimestamp(DateTimeOffset timestamp)
@@ -54,11 +44,8 @@ namespace Vostok.Tracing
         {
             try
             {
-                if (!IsCanceled)
-                {
-                    FinalizeSpan();
-                    reporter.SendSpan(span);
-                }
+                FinalizeSpan();
+                reporter.SendSpan(span);
             }
             finally
             {
@@ -66,10 +53,17 @@ namespace Vostok.Tracing
             }
         }
 
+        private void InitializeSpan()
+        {
+            span.TraceId = contextScope.Current.TraceId;
+            span.SpanId = contextScope.Current.SpanId;
+            span.ParentSpanId = contextScope.Parent?.SpanId;
+            span.BeginTimestamp = DateTimeOffset.UtcNow;
+        }
+
         private void FinalizeSpan()
         {
-            span.Annotations = spanAnnotations;
-            if (!IsEndless)
+            if (!IsEndless && !span.EndTimestamp.HasValue)
                 span.EndTimestamp = span.BeginTimestamp + stopwatch.Elapsed;
         }
     }

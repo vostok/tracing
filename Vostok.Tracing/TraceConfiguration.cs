@@ -2,7 +2,7 @@
 
 namespace Vostok.Tracing
 {
-    public class TraceConfiguration : ITraceConfiguration
+    public class TraceConfiguration
     {
         public ITraceReporter TraceReporter { get; set; }
     }
