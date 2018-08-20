@@ -3,25 +3,40 @@ using System.Linq;
 using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
+using Vostok.Context;
 using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing.Tests
 {
     public class SpanBuilder_Tests
     {
+        private readonly Guid traceId = Guid.NewGuid();
+        private readonly Guid spanId = Guid.NewGuid();
+        private readonly Guid parentSpanId = Guid.NewGuid();
         private ISpanBuilder spanBuilder;
         private ITraceReporter traceReporter;
 
         private ISpan observedSpan;
 
-        private readonly Guid traceId = Guid.NewGuid();
-        private readonly Guid spanId = Guid.NewGuid();
-        private readonly Guid parentSpanId = Guid.NewGuid();
+        private static TraceContextScope CreateTraceContextScope(Guid? traceId = null, Guid? spanId = null, Guid? parentSpanId = null)
+        {
+            var currentContext = new TraceContext(traceId ?? Guid.NewGuid(), spanId ?? Guid.NewGuid());
+            TraceContext parentTraceContext = null;
+            if (parentSpanId.HasValue)
+            {
+                parentTraceContext = new TraceContext(currentContext.TraceId, parentSpanId.Value);
+            }
+
+            var traceContextScope = new TraceContextScope(currentContext, parentTraceContext);
+            return traceContextScope;
+        }
 
         [SetUp]
         public void SetUp()
         {
             traceReporter = Substitute.For<ITraceReporter>();
+
+            FlowingContext.Globals.Set<TraceContext>(null);
 
             observedSpan = null;
 
@@ -36,6 +51,7 @@ namespace Vostok.Tracing.Tests
             using (spanBuilder = new SpanBuilder(CreateTraceContextScope(), traceReporter))
             {
             }
+
             traceReporter.Received(1).SendSpan(Arg.Any<ISpan>());
         }
 
@@ -69,14 +85,14 @@ namespace Vostok.Tracing.Tests
             {
             }
 
-            //CR(n.kochnev): using disposed field is best idea from all
-            traceContextScope.Disposed.Should().BeTrue();
+            var context = FlowingContext.Globals.Get<TraceContext>();
+            context.Should().BeNull();
         }
 
         [Test]
         public void Should_dispose_tracecontextscope_when_tracereporter_failed()
         {
-            traceReporter.When(x=>x.SendSpan(Arg.Any<ISpan>())).Do(x => throw new Exception());
+            traceReporter.When(x => x.SendSpan(Arg.Any<ISpan>())).Do(x => throw new Exception());
 
             var traceContextScope = CreateTraceContextScope();
 
@@ -87,8 +103,9 @@ namespace Vostok.Tracing.Tests
                     {
                     }
                 });
-            //CR(n.kochnev): using disposed field is best idea from all
-            traceContextScope.Disposed.Should().BeTrue();
+
+            var context = FlowingContext.Globals.Get<TraceContext>();
+            context.Should().BeNull();
         }
 
         [Test]
@@ -165,7 +182,7 @@ namespace Vostok.Tracing.Tests
         public void Should_send_span_with_custom_begintimestamp_when_called()
         {
             var traceContextScope = CreateTraceContextScope();
-            
+
             var timestamp = new DateTimeOffset(2018, 07, 09, 09, 0, 0, new TimeSpan(5, 0, 0));
 
             using (spanBuilder = new SpanBuilder(traceContextScope, traceReporter))
@@ -189,18 +206,6 @@ namespace Vostok.Tracing.Tests
             }
 
             observedSpan.EndTimestamp.Should().Be(timestamp);
-        }
-
-        private static TraceContextScope CreateTraceContextScope(Guid? traceId = null, Guid? spanId = null, Guid? parentSpanId = null)
-        {
-            var currentContext = new TraceContext(traceId ?? Guid.NewGuid(), spanId ?? Guid.NewGuid());
-            TraceContext parentTraceContext = null;
-            if (parentSpanId.HasValue)
-            {
-                parentTraceContext = new TraceContext(currentContext.TraceId, parentSpanId.Value);
-            }
-            var traceContextScope = new TraceContextScope(currentContext, parentTraceContext);
-            return traceContextScope;
         }
     }
 }

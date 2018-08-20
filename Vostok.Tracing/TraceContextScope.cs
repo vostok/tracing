@@ -6,8 +6,6 @@ namespace Vostok.Tracing
 {
     internal class TraceContextScope : IDisposable
     {
-        internal bool Disposed;
-
         internal TraceContextScope(TraceContext current, TraceContext parent)
         {
             Current = current;
@@ -20,7 +18,6 @@ namespace Vostok.Tracing
         public void Dispose()
         {
             FlowingContext.Globals.Set(Parent);
-            Disposed = true;
         }
     }
 }

@@ -16,11 +16,12 @@ namespace Vostok.Tracing
 
         public TraceContext Deserialize(string input)
         {
-            var guids = input.Split(new[] { Delimiter }, StringSplitOptions.RemoveEmptyEntries).Select(Guid.Parse).ToArray();
+            var guids = input.Split(new[] {Delimiter}, StringSplitOptions.RemoveEmptyEntries).Select(Guid.Parse).ToArray();
             if (guids.Length != 2)
             {
                 throw new ArgumentException($"Input string provide invalid value: {input}");
             }
+
             return new TraceContext(guids[0], guids[1]);
         }
     }
