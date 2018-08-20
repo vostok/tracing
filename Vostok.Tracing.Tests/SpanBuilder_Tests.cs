@@ -34,24 +34,6 @@ namespace Vostok.Tracing.Tests
             return traceContextScope;
         }
 
-        private static Span CloneSpan(ISpan span)
-        {
-            var clonedSpan = new Span()
-            {
-                TraceId = span.TraceId,
-                SpanId = span.SpanId,
-                ParentSpanId = span.ParentSpanId,
-                BeginTimestamp = span.BeginTimestamp,
-                EndTimestamp = span.EndTimestamp
-            };
-            foreach (var x in span.Annotations)
-            {
-                clonedSpan.AddAnnotation(x.Key, x.Value);
-            }
-
-            return clonedSpan;
-        }
-
         [OneTimeSetUp]
         public void OneTimeSetUp()
         {
@@ -69,7 +51,7 @@ namespace Vostok.Tracing.Tests
 
             traceReporter
                 .When(r => r.SendSpan(Arg.Any<ISpan>()))
-                .Do(info => observedSpan = CloneSpan(info.Arg<ISpan>()));
+                .Do(info => observedSpan = (ISpan)info.Arg<Span>().Clone());
         }
 
         [Test]

@@ -33,7 +33,10 @@ namespace Vostok.Tracing
         public ISpanBuilder BeginSpan()
         {
             var newScope = BeginContextScope();
-            return new SpanBuilder(newScope, objectPool, TraceConfiguration.TraceReporter);
+            var spanBuilder = new SpanBuilder(newScope, objectPool, TraceConfiguration.TraceReporter);
+            TraceConfiguration.EnrichSpanAction?.Invoke(spanBuilder);
+
+            return spanBuilder;
         }
 
         private TraceContextScope BeginContextScope()

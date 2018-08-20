@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
-    internal class Span : ISpan
+    internal class Span : ISpan, ICloneable
     {
         private readonly Dictionary<string, string> annotations;
 
@@ -28,6 +29,25 @@ namespace Vostok.Tracing
         public void ClearAnnotations()
         {
             annotations.Clear();
+        }
+        
+        public object Clone()
+        {
+            var clonedSpan = new Span()
+            {
+                TraceId = TraceId,
+                SpanId = SpanId,
+                ParentSpanId = ParentSpanId,
+                BeginTimestamp = BeginTimestamp,
+                EndTimestamp = EndTimestamp
+            };
+
+            foreach (var x in Annotations)
+            {
+                clonedSpan.AddAnnotation(x.Key, x.Value);
+            }
+
+            return clonedSpan;
         }
     }
 }
