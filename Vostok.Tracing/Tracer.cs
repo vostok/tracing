@@ -5,11 +5,13 @@ using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
+    // CR(iloktionov): Common: [CanBeNull], [NotNull] annotations where applicable.
+
     public class Tracer : ITracer
     {
         private const string DistributedGlobalName = "vostok.tracing.context";
 
-        private UnboundedObjectPool<Span> objectPool;
+        private readonly UnboundedObjectPool<Span> objectPool;
 
         static Tracer()
         {
@@ -22,6 +24,7 @@ namespace Vostok.Tracing
             objectPool = new UnboundedObjectPool<Span>(() => new Span());
         }
 
+        // CR(iloktionov): This should not be public.
         public TraceConfiguration TraceConfiguration { get; set; }
 
         public TraceContext CurrentContext

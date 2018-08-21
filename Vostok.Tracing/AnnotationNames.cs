@@ -1,5 +1,6 @@
 ﻿namespace Vostok.Tracing
 {
+    // CR(iloktionov): Move to abstractions alongside with design document.
     public static class AnnotationNames
     {
         public const string Operation = "operation";

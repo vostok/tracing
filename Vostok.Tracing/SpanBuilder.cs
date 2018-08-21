@@ -29,6 +29,7 @@ namespace Vostok.Tracing
 
         public bool IsEndless { get; set; }
 
+        // CR(iloktionov): Not the best place for inheritance configuration.
         public void SetAnnotation<TValue>(string key, TValue value, bool copyToChild = false)
         {
             span.AddAnnotation(key, value?.ToString());
@@ -59,6 +60,7 @@ namespace Vostok.Tracing
             try
             {
                 FinalizeSpan();
+                // CR(iloktionov): What if reporter holds on to our Span object?
                 reporter.SendSpan(span);
             }
             finally

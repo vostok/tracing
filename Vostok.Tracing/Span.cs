@@ -5,6 +5,7 @@ using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
+    // CR(iloktionov): Clone() is only used in tests and should be placed there.
     internal class Span : ISpan, ICloneable
     {
         private readonly Dictionary<string, string> annotations;

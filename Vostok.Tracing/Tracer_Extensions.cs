@@ -21,4 +21,11 @@ namespace Vostok.Tracing
             return spanBuilder;
         }
     }
+
+    // public interface IHttpRequestSpanBuilder : ISpanBuilder
+    // {
+        // void SetRequestDetails(Uri url, ...);
+
+        // void SetResponseDetails(int responseCode, ...);
+    // }
 }
