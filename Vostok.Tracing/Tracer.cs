@@ -24,8 +24,7 @@ namespace Vostok.Tracing
             objectPool = new UnboundedObjectPool<Span>(() => new Span());
         }
 
-        // CR(iloktionov): This should not be public.
-        public TraceConfiguration TraceConfiguration { get; set; }
+        internal TraceConfiguration TraceConfiguration { get; set; }
 
         public TraceContext CurrentContext
         {
@@ -45,7 +44,7 @@ namespace Vostok.Tracing
         private TraceContextScope BeginContextScope()
         {
             var oldContext = CurrentContext;
-            var newContext = new TraceContext(oldContext?.TraceId ?? Guid.NewGuid(), Guid.NewGuid(), oldContext?.InheritAnnotations);
+            var newContext = new TraceContext(oldContext?.TraceId ?? Guid.NewGuid(), Guid.NewGuid());
 
             CurrentContext = newContext;
 

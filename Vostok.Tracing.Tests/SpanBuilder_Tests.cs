@@ -51,7 +51,7 @@ namespace Vostok.Tracing.Tests
 
             traceReporter
                 .When(r => r.SendSpan(Arg.Any<ISpan>()))
-                .Do(info => observedSpan = (ISpan)info.Arg<Span>().Clone());
+                .Do(info => observedSpan = info.Arg<Span>().Clone());
         }
 
         [Test]
