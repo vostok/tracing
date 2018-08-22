@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using NSubstitute;
@@ -11,28 +12,14 @@ namespace Vostok.Tracing.Tests
 {
     public class SpanBuilder_Tests
     {
-        private static int ind = 0;
         private readonly Guid traceId = Guid.NewGuid();
         private readonly Guid spanId = Guid.NewGuid();
         private readonly Guid parentSpanId = Guid.NewGuid();
-        private ISpanBuilder spanBuilder;
         private ITraceReporter traceReporter;
         private UnboundedObjectPool<Span> objectPool;
+        private TraceConfiguration traceConfiguration;
 
         private ISpan observedSpan;
-
-        private static TraceContextScope CreateTraceContextScope(Guid? traceId = null, Guid? spanId = null, Guid? parentSpanId = null)
-        {
-            var currentContext = new TraceContext(traceId ?? Guid.NewGuid(), spanId ?? Guid.NewGuid());
-            TraceContext parentTraceContext = null;
-            if (parentSpanId.HasValue)
-            {
-                parentTraceContext = new TraceContext(currentContext.TraceId, parentSpanId.Value);
-            }
-
-            var traceContextScope = new TraceContextScope(currentContext, parentTraceContext);
-            return traceContextScope;
-        }
 
         [OneTimeSetUp]
         public void OneTimeSetUp()
@@ -44,8 +31,12 @@ namespace Vostok.Tracing.Tests
         public void SetUp()
         {
             traceReporter = Substitute.For<ITraceReporter>();
-
+            traceConfiguration = new TraceConfiguration()
+            {
+                TraceReporter = traceReporter
+            };
             FlowingContext.Globals.Set<TraceContext>(null);
+            FlowingContext.Globals.Set<FlowingContextStorageSpan>(null);
 
             observedSpan = null;
 
@@ -57,7 +48,7 @@ namespace Vostok.Tracing.Tests
         [Test]
         public void Should_send_span()
         {
-            using (spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceReporter))
+            using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceConfiguration))
             {
             }
 
@@ -67,7 +58,7 @@ namespace Vostok.Tracing.Tests
         [Test]
         public void Should_send_span_with_endtimestamp_when_span_is_not_endless()
         {
-            using (spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceReporter))
+            using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceConfiguration))
             {
             }
 
@@ -77,7 +68,7 @@ namespace Vostok.Tracing.Tests
         [Test]
         public void Should_send_span_without_endtimestamp_when_span_is_endless()
         {
-            using (spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceReporter))
+            using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceConfiguration))
             {
                 spanBuilder.IsEndless = true;
             }
@@ -90,7 +81,7 @@ namespace Vostok.Tracing.Tests
         {
             var traceContextScope = CreateTraceContextScope();
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
+            using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
             {
             }
 
@@ -108,7 +99,7 @@ namespace Vostok.Tracing.Tests
             Assert.Throws<Exception>(
                 () =>
                 {
-                    using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
+                    using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
                     {
                     }
                 });
@@ -122,7 +113,7 @@ namespace Vostok.Tracing.Tests
         {
             var traceContextScope = CreateTraceContextScope(parentSpanId: parentSpanId);
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
+            using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
             {
             }
 
@@ -134,7 +125,7 @@ namespace Vostok.Tracing.Tests
         {
             var traceContextScope = CreateTraceContextScope(traceId, spanId);
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
+            using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
             {
             }
 
@@ -147,7 +138,7 @@ namespace Vostok.Tracing.Tests
         {
             var traceContextScope = CreateTraceContextScope();
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
+            using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
             {
             }
 
@@ -160,7 +151,7 @@ namespace Vostok.Tracing.Tests
         {
             var traceContextScope = CreateTraceContextScope();
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
+            using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
             {
             }
 
@@ -175,7 +166,7 @@ namespace Vostok.Tracing.Tests
             const string customAnnotationKey = "key";
             const string customAnnotationValue = "value";
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
+            using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
             {
                 spanBuilder.SetAnnotation(customAnnotationKey, customAnnotationValue);
             }
@@ -194,7 +185,7 @@ namespace Vostok.Tracing.Tests
 
             var timestamp = new DateTimeOffset(2018, 07, 09, 09, 0, 0, new TimeSpan(5, 0, 0));
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
+            using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
             {
                 spanBuilder.SetBeginTimestamp(timestamp);
             }
@@ -209,12 +200,112 @@ namespace Vostok.Tracing.Tests
 
             var timestamp = new DateTimeOffset(2018, 07, 09, 09, 0, 0, new TimeSpan(5, 0, 0));
 
-            using (spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceReporter))
+            using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
             {
                 spanBuilder.SetEndTimestamp(timestamp);
             }
 
             observedSpan.EndTimestamp.Should().Be(timestamp);
+        }
+
+        [Test]
+        public void Should_inherit_annotation_from_parent_span_when_whitelist_contain_key()
+        {
+            SetTraceContextInheritedFieldsWhitelist("name1");
+
+            using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
+            {
+                spanBuilder.SetAnnotation("name1", "value1");
+                using (var sp2 = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
+                {
+                }
+
+                observedSpan.Annotations.ContainsKey("name1").Should().BeTrue();
+                observedSpan.Annotations["name1"].Should().Be("value1");
+            }
+        }
+
+        [Test]
+        public void Should_not_inherit_annotation_from_parent_span_when_whitelist_is_empty()
+        {
+            SetTraceContextInheritedFieldsWhitelist();
+
+            using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
+            {
+                spanBuilder.SetAnnotation("name1", "value1");
+                using (var sp2 = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
+                {
+                }
+
+                observedSpan.Annotations.ContainsKey("name1").Should().BeFalse();
+            }
+        }
+
+        [Test]
+        public void Should_not_inherit_annotation_from_parent_span_when_key_not_in_spanbuilder()
+        {
+            SetTraceContextInheritedFieldsWhitelist("nameX");
+
+            using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
+            {
+                spanBuilder.SetAnnotation("name1", "value1");
+                using (var sp2 = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
+                {
+                }
+
+                observedSpan.Annotations.ContainsKey("nameX").Should().BeFalse();
+            }
+        }
+
+        [Test]
+        public void Should_inherit_annotation_through_three_levels()
+        {
+            SetTraceContextInheritedFieldsWhitelist("name1");
+
+            using (var parentSpan = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
+            {
+                parentSpan.SetAnnotation("name1", "value1");
+                using (var level1Span = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
+                {
+                    using (var level2Span = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
+                    {
+                        using (var level3Span = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
+                        {
+                        }
+
+                        observedSpan.Annotations.ContainsKey("name1").Should().BeTrue();
+                        observedSpan.Annotations["name1"].Should().Be("value1");
+                    }
+
+                    observedSpan.Annotations.ContainsKey("name1").Should().BeTrue();
+                    observedSpan.Annotations["name1"].Should().Be("value1");
+                }
+
+                observedSpan.Annotations.ContainsKey("name1").Should().BeTrue();
+                observedSpan.Annotations["name1"].Should().Be("value1");
+            }
+        }
+
+        private static TraceContextScope CreateTraceContextScope(Guid? traceId = null, Guid? spanId = null, Guid? parentSpanId = null)
+        {
+            var currentContext = new TraceContext(traceId ?? Guid.NewGuid(), spanId ?? Guid.NewGuid());
+            TraceContext parentTraceContext = null;
+            if (parentSpanId.HasValue)
+            {
+                parentTraceContext = new TraceContext(currentContext.TraceId, parentSpanId.Value);
+            }
+
+            var traceContextScope = new TraceContextScope(currentContext, parentTraceContext);
+            return traceContextScope;
+        }
+
+        private void SetTraceContextInheritedFieldsWhitelist(params string[] inheritedFieldsWhitelist)
+        {
+            traceConfiguration = new TraceConfiguration()
+            {
+                TraceReporter = traceReporter,
+                InheritedFieldsWhitelist = new HashSet<string>(inheritedFieldsWhitelist)
+            };
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
@@ -9,7 +8,7 @@ namespace Vostok.Tracing
     {
         private readonly Dictionary<string, string> annotations;
 
-        public Span()
+        internal Span()
         {
             annotations = new Dictionary<string, string>();
         }
@@ -21,9 +20,15 @@ namespace Vostok.Tracing
         public DateTimeOffset? EndTimestamp { get; set; }
         public IReadOnlyDictionary<string, string> Annotations => annotations;
 
-        public void AddAnnotation(string key, string value)
+        public void AddAnnotation(string key, string value, bool allowOverwrite)
         {
-            annotations.Add(key, value);
+            if (!annotations.ContainsKey(key))
+            {
+                annotations.Add(key, value);
+                return;
+            }
+            if (allowOverwrite)
+                annotations[key] = value;
         }
 
         public void ClearAnnotations()

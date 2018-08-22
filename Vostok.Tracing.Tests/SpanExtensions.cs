@@ -17,7 +17,7 @@ namespace Vostok.Tracing.Tests
 
             foreach (var x in span.Annotations)
             {
-                clonedSpan.AddAnnotation(x.Key, x.Value);
+                clonedSpan.AddAnnotation(x.Key, x.Value, true);
             }
 
             return clonedSpan;

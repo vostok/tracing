@@ -5,8 +5,6 @@ using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
-    // CR(iloktionov): Common: [CanBeNull], [NotNull] annotations where applicable.
-
     public class Tracer : ITracer
     {
         private const string DistributedGlobalName = "vostok.tracing.context";
@@ -24,8 +22,6 @@ namespace Vostok.Tracing
             objectPool = new UnboundedObjectPool<Span>(() => new Span());
         }
 
-        internal TraceConfiguration TraceConfiguration { get; set; }
-
         public TraceContext CurrentContext
         {
             get => FlowingContext.Globals.Get<TraceContext>();
@@ -35,11 +31,12 @@ namespace Vostok.Tracing
         public ISpanBuilder BeginSpan()
         {
             var newScope = BeginContextScope();
-            var spanBuilder = new SpanBuilder(newScope, objectPool, TraceConfiguration.TraceReporter);
-            TraceConfiguration.EnrichSpanAction?.Invoke(spanBuilder);
+            var spanBuilder = new SpanBuilder(newScope, objectPool, TraceConfiguration);
 
             return spanBuilder;
         }
+
+        internal TraceConfiguration TraceConfiguration { get; set; }
 
         private TraceContextScope BeginContextScope()
         {

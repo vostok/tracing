@@ -5,8 +5,7 @@ using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
-    //TODO: write tests
-    public class TraceContextSerializer : IContextSerializer<TraceContext>
+    internal class TraceContextSerializer : IContextSerializer<TraceContext>
     {
         private const char Delimiter = ';';
 

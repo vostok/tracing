@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using Vostok.Commons.Collections;
+using Vostok.Context;
 using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
@@ -9,27 +10,33 @@ namespace Vostok.Tracing
     {
         private readonly TraceContextScope contextScope;
         private readonly UnboundedObjectPool<Span> objectPool;
-        private readonly ITraceReporter reporter;
+        private readonly TraceConfiguration configuration;
         private readonly Span span;
         private readonly Stopwatch stopwatch;
+        private readonly ISpan parentSpan;
 
-        public SpanBuilder(TraceContextScope contextScope, UnboundedObjectPool<Span> objectPool, ITraceReporter reporter)
+        public SpanBuilder(TraceContextScope contextScope, UnboundedObjectPool<Span> objectPool, TraceConfiguration configuration)
         {
             this.contextScope = contextScope;
             this.objectPool = objectPool;
-            this.reporter = reporter;
+            this.configuration = configuration;
 
             stopwatch = Stopwatch.StartNew();
 
             span = objectPool.Acquire();
+
+            parentSpan = FlowingContext.Globals.Get<FlowingContextStorageSpan>()?.Span;
+            FlowingContext.Globals.Set(FlowingContextStorageSpan.CreateFromSpan(span));
+
             InitializeSpan();
+            EnrichSpanWithInheritedFields();
         }
 
         public bool IsEndless { get; set; }
 
-        public void SetAnnotation<TValue>(string key, TValue value)
+        public void SetAnnotation(string key, string value, bool allowOverwrite = true)
         {
-            span.AddAnnotation(key, value?.ToString());
+            span.AddAnnotation(key, value, allowOverwrite);
         }
 
         public void SetBeginTimestamp(DateTimeOffset timestamp)
@@ -48,8 +55,8 @@ namespace Vostok.Tracing
             {
                 FinalizeSpan();
 
-                var sendResult = reporter.SendSpan(span);
-                if (sendResult == SpanSendResult.Sended)
+                var sendResult = configuration.TraceReporter.SendSpan(span);
+                if (sendResult == SpanSendResult.Send)
                 {
                     CleanupSpan();
                     objectPool.Return(span);
@@ -80,6 +87,18 @@ namespace Vostok.Tracing
             span.ClearAnnotations();
             span.ParentSpanId = null;
             span.EndTimestamp = null;
+        }
+
+        private void EnrichSpanWithInheritedFields()
+        {
+            if (parentSpan == null)
+                return;
+
+            foreach (var field in configuration.InheritedFieldsWhitelist)
+            {
+                if (parentSpan.Annotations.TryGetValue(field, out var value))
+                    SetAnnotation(field, value);
+            }
         }
     }
 }
