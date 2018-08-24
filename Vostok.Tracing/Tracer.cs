@@ -1,10 +1,12 @@
 ﻿using System;
+using JetBrains.Annotations;
 using Vostok.Commons.Collections;
 using Vostok.Context;
 using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
+    [PublicAPI]
     public class Tracer : ITracer
     {
         private const string DistributedGlobalName = "vostok.tracing.context";
@@ -18,6 +20,8 @@ namespace Vostok.Tracing
 
         public Tracer(TraceConfiguration traceConfiguration)
         {
+            ValidateConfiguration(traceConfiguration);
+
             TraceConfiguration = traceConfiguration;
             objectPool = new UnboundedObjectPool<Span>(() => new Span());
         }
@@ -36,7 +40,7 @@ namespace Vostok.Tracing
             return spanBuilder;
         }
 
-        internal TraceConfiguration TraceConfiguration { get; set; }
+        private TraceConfiguration TraceConfiguration { get; set; }
 
         private TraceContextScope BeginContextScope()
         {
@@ -46,6 +50,14 @@ namespace Vostok.Tracing
             CurrentContext = newContext;
 
             return new TraceContextScope(newContext, oldContext);
+        }
+
+        private void ValidateConfiguration(TraceConfiguration configuration)
+        {
+            if (configuration.SpanSender == null)
+            {
+                throw new ArgumentNullException(nameof(configuration));
+            }
         }
     }
 }

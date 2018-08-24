@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net;
 using Vostok.Commons.Collections;
 using Vostok.Context;
 using Vostok.Tracing.Abstractions;
@@ -26,17 +27,18 @@ namespace Vostok.Tracing
             span = objectPool.Acquire();
 
             parentSpan = FlowingContext.Globals.Get<FlowingContextStorageSpan>()?.Span;
-            FlowingContext.Globals.Set(FlowingContextStorageSpan.CreateFromSpan(span));
+            FlowingContext.Globals.Set(new FlowingContextStorageSpan(span));
 
             InitializeSpan();
             EnrichSpanWithInheritedFields();
+            SetDefaultAnnotations();
         }
 
         public bool IsEndless { get; set; }
 
         public void SetAnnotation(string key, string value, bool allowOverwrite = true)
         {
-            span.AddAnnotation(key, value, allowOverwrite);
+            span.SetAnnotation(key, value, allowOverwrite);
         }
 
         public void SetBeginTimestamp(DateTimeOffset timestamp)
@@ -55,8 +57,8 @@ namespace Vostok.Tracing
             {
                 FinalizeSpan();
 
-                var sendResult = configuration.TraceReporter.SendSpan(span);
-                if (sendResult == SpanSendResult.Send)
+                var sendResult = configuration.SpanSender.Send(span);
+                if (sendResult == SpanSendResult.Sent)
                 {
                     CleanupSpan();
                     objectPool.Return(span);
@@ -66,6 +68,11 @@ namespace Vostok.Tracing
             {
                 contextScope.Dispose();
             }
+        }
+
+        private void SetDefaultAnnotations()
+        {
+            span.SetAnnotation(WellKnownAnnotations.Host, Dns.GetHostName(), true);
         }
 
         private void InitializeSpan()
@@ -99,6 +106,16 @@ namespace Vostok.Tracing
                 if (parentSpan.Annotations.TryGetValue(field, out var value))
                     SetAnnotation(field, value);
             }
+        }
+
+        internal class FlowingContextStorageSpan
+        {
+            public FlowingContextStorageSpan(ISpan span)
+            {
+                Span = span;
+            }
+
+            public ISpan Span { get; set; }
         }
     }
 }

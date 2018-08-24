@@ -8,18 +8,16 @@ namespace Vostok.Tracing
     internal class TraceContextSerializer : IContextSerializer<TraceContext>
     {
         private const char Delimiter = ';';
+        private static char[] DelimiterArray = {Delimiter};
 
-        public string Serialize(TraceContext value)
-        {
-            return $"{value.TraceId}{Delimiter}{value.SpanId}";
-        }
+        public string Serialize(TraceContext value) => $"{value.TraceId}{Delimiter}{value.SpanId}";
 
         public TraceContext Deserialize(string input)
         {
-            var guids = input.Split(new[] {Delimiter}, StringSplitOptions.RemoveEmptyEntries).Select(Guid.Parse).ToArray();
+            var guids = input.Split(DelimiterArray, StringSplitOptions.RemoveEmptyEntries).Select(Guid.Parse).ToArray();
             if (guids.Length != 2)
             {
-                throw new ArgumentException($"Input string provide invalid value: {input}");
+                throw new ArgumentException($"Input string has invalid value: {input}");
             }
 
             return new TraceContext(guids[0], guids[1]);

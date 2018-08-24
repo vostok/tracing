@@ -1,57 +1,45 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
 using Vostok.Context;
 using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
-    public static class WithFlowingContextAnnotationTracer_Extensions
+    [PublicAPI]
+    public static class WithFlowingContextAnnotationTracerExtensions
     {
         [Pure]
-        public static ITracer WithFlowingContextPropertyAnnotation(this ITracer tracer, string flowingContextPropertyKey, bool allowOverwrite = false)
+        public static ITracer WithFlowingContextAnnotation(this ITracer tracer, [NotNull] string propertyKey, bool allowOverwrite = false)
         {
-            return new WithFlowingContextPropertiesAnnotationTracer(tracer, new[] {flowingContextPropertyKey}, allowOverwrite);
+            return tracer.WithAnnotation(propertyKey, () => GetFlowingContextPropertyValue(propertyKey), allowOverwrite);
         }
 
         [Pure]
-        public static ITracer WithFlowingContextPropertyAnnotations(this ITracer tracer, IEnumerable<string> flowingContextPropertyKeys, bool allowOverwrite = false)
+        public static ITracer WithFlowingContextAnnotations(this ITracer tracer, [ItemNotNull] IEnumerable<string> propertyKeys, bool allowOverwrite = false)
         {
-            return new WithFlowingContextPropertiesAnnotationTracer(tracer, flowingContextPropertyKeys, allowOverwrite);
+            return tracer.WithAnnotations(GetFlowingContextPropertiesValue(propertyKeys));
         }
 
-        private class WithFlowingContextPropertiesAnnotationTracer : ITracer
+        private static Dictionary<string,string> GetFlowingContextPropertiesValue(IEnumerable<string> propertyKeys)
         {
-            private readonly ITracer baseTracer;
-            private readonly IEnumerable<string> flowingContextPropertyKeys;
-            private readonly bool allowOverwrite;
+            return propertyKeys.ToDictionary(propertyKey => propertyKey, GetFlowingContextPropertyValue);
+        }
 
-            public WithFlowingContextPropertiesAnnotationTracer(ITracer baseTracer, IEnumerable<string> flowingContextPropertyKeys, bool allowOverwrite)
+        private static string GetFlowingContextPropertyValue(string propertyName)
+        {
+            if (propertyName == null)
             {
-                this.baseTracer = baseTracer;
-                this.flowingContextPropertyKeys = flowingContextPropertyKeys;
-                this.allowOverwrite = allowOverwrite;
+                throw new ArgumentNullException(nameof(propertyName));
             }
 
-            public TraceContext CurrentContext
+            if (FlowingContext.Properties.Current.TryGetValue(propertyName, out var val))
             {
-                get => baseTracer.CurrentContext;
-                set => baseTracer.CurrentContext = value;
+                return val?.ToString();
             }
 
-            public ISpanBuilder BeginSpan()
-            {
-                var span = baseTracer.BeginSpan();
-
-                foreach (var flowingContextPropertyKey in flowingContextPropertyKeys)
-                {
-                    if (FlowingContext.Properties.Current.TryGetValue(flowingContextPropertyKey, out var val))
-                    {
-                        span.SetAnnotation(flowingContextPropertyKey, val?.ToString(), allowOverwrite);
-                    }
-                }
-
-                return span;
-            }
+            return null;
         }
     }
 }

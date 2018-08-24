@@ -7,7 +7,7 @@ namespace Vostok.Tracing
 {
     internal class TraceContextScope : IDisposable
     {
-        internal TraceContextScope(TraceContext current, TraceContext parent)
+        public TraceContextScope(TraceContext current, TraceContext parent)
         {
             Current = current;
             Parent = parent;

@@ -17,7 +17,7 @@ namespace Vostok.Tracing.Tests
         [Test]
         public void AddAnnotation_success()
         {
-            span.AddAnnotation("key1", "value1", false);
+            span.SetAnnotation("key1", "value1", false);
 
             span.Annotations["key1"].Should().Be("value1");
         }
@@ -25,9 +25,9 @@ namespace Vostok.Tracing.Tests
         [Test]
         public void AddAnnotation_overwrite_annotation_when_set_overwrite()
         {
-            span.AddAnnotation("key1", "value1", false);
+            span.SetAnnotation("key1", "value1", false);
 
-            span.AddAnnotation("key1", "valueX", true);
+            span.SetAnnotation("key1", "valueX", true);
 
             span.Annotations["key1"].Should().Be("valueX");
         }
@@ -35,9 +35,9 @@ namespace Vostok.Tracing.Tests
         [Test]
         public void AddAnnotation_not_overwrite_annotation_when_set_no_overwrite()
         {
-            span.AddAnnotation("key1", "value1", false);
+            span.SetAnnotation("key1", "value1", false);
 
-            span.AddAnnotation("key1", "valueX", false);
+            span.SetAnnotation("key1", "valueX", false);
 
             span.Annotations["key1"].Should().Be("value1");
         }
@@ -45,8 +45,8 @@ namespace Vostok.Tracing.Tests
         [Test]
         public void ClearAnnotations_success()
         {
-            span.AddAnnotation("key1", "value1", false);
-            span.AddAnnotation("key2", "value2", false);
+            span.SetAnnotation("key1", "value1", false);
+            span.SetAnnotation("key2", "value2", false);
 
             span.ClearAnnotations();
 

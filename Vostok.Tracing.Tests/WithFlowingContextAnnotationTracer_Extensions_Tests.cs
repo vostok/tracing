@@ -27,7 +27,7 @@ namespace Vostok.Tracing.Tests
         public void WithFlowingContextPropertyAnnotation_should_return_a_tracer_that_setted_annotation_when_key_exist_in_context()
         {
             FlowingContext.Properties.Set("name1", "value1");
-            enrichTracer = baseTracer.WithFlowingContextPropertyAnnotation("name1");
+            enrichTracer = baseTracer.WithFlowingContextAnnotation("name1");
 
             enrichTracer.BeginSpan();
 
@@ -37,7 +37,7 @@ namespace Vostok.Tracing.Tests
         [Test]
         public void WithFlowingContextPropertyAnnotation_should_return_a_tracer_that_not_setted_annotation_when_key_not_exist_in_context()
         {
-            enrichTracer = baseTracer.WithFlowingContextPropertyAnnotation("name1");
+            enrichTracer = baseTracer.WithFlowingContextAnnotation("name1");
 
             enrichTracer.BeginSpan();
 
@@ -48,7 +48,7 @@ namespace Vostok.Tracing.Tests
         public void WithFlowingContextPropertyAnnotation_should_return_a_tracer_that_not_setted_annotation_when_key_not_ask()
         {
             FlowingContext.Properties.Set("name2", "value2");
-            enrichTracer = baseTracer.WithFlowingContextPropertyAnnotation("name1");
+            enrichTracer = baseTracer.WithFlowingContextAnnotation("name1");
 
             enrichTracer.BeginSpan();
 
@@ -61,7 +61,7 @@ namespace Vostok.Tracing.Tests
         public void WithFlowingContextPropertyAnnotation_should_return_a_tracer_that_pass_allowOverwrite_to_spanbuilder(bool allowOverwrite)
         {
             FlowingContext.Properties.Set("name1", "value1");
-            enrichTracer = baseTracer.WithFlowingContextPropertyAnnotation("name1", allowOverwrite);
+            enrichTracer = baseTracer.WithFlowingContextAnnotation("name1", allowOverwrite);
 
             enrichTracer.BeginSpan();
 
@@ -73,7 +73,7 @@ namespace Vostok.Tracing.Tests
         {
             FlowingContext.Properties.Set("name1", "value1");
             FlowingContext.Properties.Set("name2", "value2");
-            enrichTracer = baseTracer.WithFlowingContextPropertyAnnotations(new[] {"name1", "name2"});
+            enrichTracer = baseTracer.WithFlowingContextAnnotations(new[] {"name1", "name2"});
 
             enrichTracer.BeginSpan();
 
@@ -85,7 +85,7 @@ namespace Vostok.Tracing.Tests
         public void WithFlowingContextPropertyAnnotations_should_return_a_tracer_that_setted_annotation_when_not_all_keys_exist_in_context()
         {
             FlowingContext.Properties.Set("name1", "value1");
-            enrichTracer = baseTracer.WithFlowingContextPropertyAnnotations(new[] { "name1", "name2" });
+            enrichTracer = baseTracer.WithFlowingContextAnnotations(new[] { "name1", "name2" });
 
             enrichTracer.BeginSpan();
 
@@ -100,7 +100,7 @@ namespace Vostok.Tracing.Tests
         {
             FlowingContext.Properties.Set("name1", "value1");
             FlowingContext.Properties.Set("name2", "value2");
-            enrichTracer = baseTracer.WithFlowingContextPropertyAnnotations(new[] { "name1", "name2" }, allowOverwrite);
+            enrichTracer = baseTracer.WithFlowingContextAnnotations(new[] { "name1", "name2" }, allowOverwrite);
 
             enrichTracer.BeginSpan();
 

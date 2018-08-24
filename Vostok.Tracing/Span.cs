@@ -8,7 +8,7 @@ namespace Vostok.Tracing
     {
         private readonly Dictionary<string, string> annotations;
 
-        internal Span()
+        public Span()
         {
             annotations = new Dictionary<string, string>();
         }
@@ -20,15 +20,12 @@ namespace Vostok.Tracing
         public DateTimeOffset? EndTimestamp { get; set; }
         public IReadOnlyDictionary<string, string> Annotations => annotations;
 
-        public void AddAnnotation(string key, string value, bool allowOverwrite)
+        public void SetAnnotation(string key, string value, bool allowOverwrite)
         {
-            if (!annotations.ContainsKey(key))
-            {
-                annotations.Add(key, value);
-                return;
-            }
             if (allowOverwrite)
                 annotations[key] = value;
+            if (!annotations.ContainsKey(key))
+                annotations.Add(key, value);
         }
 
         public void ClearAnnotations()

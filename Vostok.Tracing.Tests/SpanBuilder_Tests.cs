@@ -15,7 +15,7 @@ namespace Vostok.Tracing.Tests
         private readonly Guid traceId = Guid.NewGuid();
         private readonly Guid spanId = Guid.NewGuid();
         private readonly Guid parentSpanId = Guid.NewGuid();
-        private ITraceReporter traceReporter;
+        private ISpanSender spanSender;
         private UnboundedObjectPool<Span> objectPool;
         private TraceConfiguration traceConfiguration;
 
@@ -30,18 +30,18 @@ namespace Vostok.Tracing.Tests
         [SetUp]
         public void SetUp()
         {
-            traceReporter = Substitute.For<ITraceReporter>();
+            spanSender = Substitute.For<ISpanSender>();
             traceConfiguration = new TraceConfiguration()
             {
-                TraceReporter = traceReporter
+                SpanSender = spanSender
             };
             FlowingContext.Globals.Set<TraceContext>(null);
-            FlowingContext.Globals.Set<FlowingContextStorageSpan>(null);
+            FlowingContext.Globals.Set<SpanBuilder.FlowingContextStorageSpan>(null);
 
             observedSpan = null;
 
-            traceReporter
-                .When(r => r.SendSpan(Arg.Any<ISpan>()))
+            spanSender
+                .When(r => r.Send(Arg.Any<ISpan>()))
                 .Do(info => observedSpan = info.Arg<Span>().Clone());
         }
 
@@ -52,7 +52,7 @@ namespace Vostok.Tracing.Tests
             {
             }
 
-            traceReporter.Received(1).SendSpan(Arg.Any<ISpan>());
+            spanSender.Received(1).Send(Arg.Any<ISpan>());
         }
 
         [Test]
@@ -92,7 +92,7 @@ namespace Vostok.Tracing.Tests
         [Test]
         public void Should_dispose_tracecontextscope_when_tracereporter_failed()
         {
-            traceReporter.When(x => x.SendSpan(Arg.Any<ISpan>())).Do(x => throw new Exception());
+            spanSender.When(x => x.Send(Arg.Any<ISpan>())).Do(x => throw new Exception());
 
             var traceContextScope = CreateTraceContextScope();
 
@@ -303,7 +303,7 @@ namespace Vostok.Tracing.Tests
         {
             traceConfiguration = new TraceConfiguration()
             {
-                TraceReporter = traceReporter,
+                SpanSender = spanSender,
                 InheritedFieldsWhitelist = new HashSet<string>(inheritedFieldsWhitelist)
             };
         }

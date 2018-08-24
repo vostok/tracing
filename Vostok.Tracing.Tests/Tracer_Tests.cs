@@ -9,7 +9,7 @@ namespace Vostok.Tracing.Tests
 {
     public class Tracer_Tests
     {
-        private ITraceReporter traceReporter;
+        private ISpanSender spanSender;
         private ITracer tracer;
         private TraceConfiguration traceConfiguration;
 
@@ -18,15 +18,15 @@ namespace Vostok.Tracing.Tests
         [SetUp]
         public void SetUp()
         {
-            traceReporter = Substitute.For<ITraceReporter>();
+            spanSender = Substitute.For<ISpanSender>();
             traceConfiguration = new TraceConfiguration();
-            traceConfiguration.TraceReporter = traceReporter;
+            traceConfiguration.SpanSender = spanSender;
             tracer = new Tracer(traceConfiguration);
 
             observedSpan = null;
 
-            traceReporter
-                .When(r => r.SendSpan(Arg.Any<ISpan>()))
+            spanSender
+                .When(r => r.Send(Arg.Any<ISpan>()))
                 .Do(info => observedSpan = info.Arg<Span>().Clone());
         }
 
