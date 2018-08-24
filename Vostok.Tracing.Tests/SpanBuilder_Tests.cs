@@ -46,7 +46,7 @@ namespace Vostok.Tracing.Tests
         }
 
         [Test]
-        public void Should_send_span()
+        public void Should_send_span_by_default()
         {
             using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceConfiguration))
             {
@@ -70,7 +70,7 @@ namespace Vostok.Tracing.Tests
         {
             using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceConfiguration))
             {
-                spanBuilder.IsEndless = true;
+                spanBuilder.MakeEndless();
             }
 
             observedSpan.EndTimestamp.Should().BeNull();
@@ -134,7 +134,7 @@ namespace Vostok.Tracing.Tests
         }
 
         [Test]
-        public void Should_send_span_with_endtimestamp()
+        public void Should_send_span_with_endtimestamp_grater_then_begintimestamp()
         {
             var traceContextScope = CreateTraceContextScope();
 
@@ -142,7 +142,6 @@ namespace Vostok.Tracing.Tests
             {
             }
 
-            observedSpan.BeginTimestamp.Should().BeMoreThan(TimeSpan.Zero);
             observedSpan.EndTimestamp.Should().BeAfter(observedSpan.BeginTimestamp);
         }
 
@@ -155,7 +154,8 @@ namespace Vostok.Tracing.Tests
             {
             }
 
-            observedSpan.Annotations.Should().BeEmpty();
+            observedSpan.Annotations.Should().HaveCount(1);
+            observedSpan.Annotations.ContainsKey(WellKnownAnnotations.Host).Should().BeTrue();
         }
 
         [Test]
@@ -171,11 +171,8 @@ namespace Vostok.Tracing.Tests
                 spanBuilder.SetAnnotation(customAnnotationKey, customAnnotationValue);
             }
 
-            observedSpan.Annotations.Count.Should().Be(1);
-
-            var addedAnnotation = observedSpan.Annotations.First();
-            addedAnnotation.Key.Should().Be(customAnnotationKey);
-            addedAnnotation.Value.Should().Be(customAnnotationValue);
+            observedSpan.Annotations.ContainsKey(customAnnotationKey).Should().BeTrue();
+            observedSpan.Annotations[customAnnotationKey].Should().Be(customAnnotationValue);
         }
 
         [Test]

@@ -19,7 +19,7 @@ namespace Vostok.Tracing
         [Pure]
         public static ITracer WithFlowingContextAnnotations(this ITracer tracer, [ItemNotNull] IEnumerable<string> propertyKeys, bool allowOverwrite = false)
         {
-            return tracer.WithAnnotations(GetFlowingContextPropertiesValue(propertyKeys));
+            return tracer.WithAnnotations(GetFlowingContextPropertiesValue(propertyKeys), allowOverwrite);
         }
 
         private static Dictionary<string,string> GetFlowingContextPropertiesValue(IEnumerable<string> propertyKeys)
@@ -34,12 +34,7 @@ namespace Vostok.Tracing
                 throw new ArgumentNullException(nameof(propertyName));
             }
 
-            if (FlowingContext.Properties.Current.TryGetValue(propertyName, out var val))
-            {
-                return val?.ToString();
-            }
-
-            return null;
+            return FlowingContext.Properties.Current.TryGetValue(propertyName, out var val) ? val?.ToString() : null;
         }
     }
 }

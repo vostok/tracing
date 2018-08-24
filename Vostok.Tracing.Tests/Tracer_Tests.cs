@@ -69,13 +69,14 @@ namespace Vostok.Tracing.Tests
         }
 
         [Test]
-        public void BeginSpan_no_enrich_span_when_no_configuration()
+        public void BeginSpan_enrich_span_only_with_default_annotations_when_no_span_configuration()
         {
             using (var span1 = tracer.BeginSpan())
             {
             }
 
-            observedSpan.Annotations.Should().BeEmpty();
+            observedSpan.Annotations.Should().HaveCount(1);
+            observedSpan.Annotations.ContainsKey(WellKnownAnnotations.Host).Should().BeTrue();
         }
     }
 }
