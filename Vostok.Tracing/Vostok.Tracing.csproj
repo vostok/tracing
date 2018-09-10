@@ -9,11 +9,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <VersionPrefix>0.0.1</VersionPrefix>
-    <VersionSuffix>
-    </VersionSuffix>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PackageReleaseNotes>TODO</PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup>
     <Title>Vostok.Tracing</Title>
