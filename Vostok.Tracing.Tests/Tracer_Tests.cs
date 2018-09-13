@@ -76,7 +76,7 @@ namespace Vostok.Tracing.Tests
             }
 
             observedSpan.Annotations.Should().HaveCount(1);
-            observedSpan.Annotations.ContainsKey(WellKnownAnnotations.Host).Should().BeTrue();
+            observedSpan.Annotations.ContainsKey(WellKnownAnnotations.Common.Host).Should().BeTrue();
         }
     }
 }
