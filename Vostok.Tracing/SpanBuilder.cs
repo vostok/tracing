@@ -46,9 +46,10 @@ namespace Vostok.Tracing
             span.BeginTimestamp = timestamp;
         }
 
-        public void SetEndTimestamp(DateTimeOffset timestamp)
+        public void SetEndTimestamp(DateTimeOffset? timestamp)
         {
             span.EndTimestamp = timestamp;
+            IsEndless = timestamp == null;
         }
 
         public void Dispose()
@@ -72,7 +73,7 @@ namespace Vostok.Tracing
 
         private void SetDefaultAnnotations()
         {
-            span.SetAnnotation(WellKnownAnnotations.Host, Dns.GetHostName(), true);
+            span.SetAnnotation(WellKnownAnnotations.Common.Host, Dns.GetHostName(), true);
         }
 
         private void InitializeSpan()
