@@ -23,7 +23,11 @@ namespace Vostok.Tracing
         public void SetAnnotation(string key, string value, bool allowOverwrite)
         {
             if (allowOverwrite)
+            {
                 annotations[key] = value;
+                return;
+            }
+
             if (!annotations.ContainsKey(key))
                 annotations.Add(key, value);
         }
