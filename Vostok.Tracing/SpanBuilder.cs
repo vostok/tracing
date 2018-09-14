@@ -34,6 +34,8 @@ namespace Vostok.Tracing
             SetDefaultAnnotations();
         }
 
+        public ISpan CurrentSpan => null;
+
         public bool IsEndless { get; set; }
 
         public void SetAnnotation(string key, string value, bool allowOverwrite = true)
@@ -58,12 +60,11 @@ namespace Vostok.Tracing
             {
                 FinalizeSpan();
 
-                var sendResult = configuration.SpanSender.Send(span);
-                if (sendResult == SpanSendResult.Sent)
-                {
-                    CleanupSpan();
-                    objectPool.Return(span);
-                }
+                configuration.SpanSender.Send(span);
+
+                CleanupSpan();
+
+                objectPool.Return(span);
             }
             finally
             {
