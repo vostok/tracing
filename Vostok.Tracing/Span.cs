@@ -31,10 +31,5 @@ namespace Vostok.Tracing
             if (!annotations.ContainsKey(key))
                 annotations.Add(key, value);
         }
-
-        public void ClearAnnotations()
-        {
-            annotations.Clear();
-        }
     }
 }

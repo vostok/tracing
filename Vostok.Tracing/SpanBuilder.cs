@@ -10,21 +10,19 @@ namespace Vostok.Tracing
     internal class SpanBuilder : ISpanBuilder
     {
         private readonly TraceContextScope contextScope;
-        private readonly UnboundedObjectPool<Span> objectPool;
         private readonly TraceConfiguration configuration;
         private readonly Span span;
         private readonly Stopwatch stopwatch;
         private readonly ISpan parentSpan;
 
-        public SpanBuilder(TraceContextScope contextScope, UnboundedObjectPool<Span> objectPool, TraceConfiguration configuration)
+        public SpanBuilder(TraceContextScope contextScope, TraceConfiguration configuration)
         {
             this.contextScope = contextScope;
-            this.objectPool = objectPool;
             this.configuration = configuration;
 
             stopwatch = Stopwatch.StartNew();
 
-            span = objectPool.Acquire();
+            span = new Span();
 
             parentSpan = FlowingContext.Globals.Get<FlowingContextStorageSpan>()?.Span;
             FlowingContext.Globals.Set(new FlowingContextStorageSpan(span));
@@ -61,10 +59,6 @@ namespace Vostok.Tracing
                 FinalizeSpan();
 
                 configuration.SpanSender.Send(span);
-
-                CleanupSpan();
-
-                objectPool.Return(span);
             }
             finally
             {
@@ -89,13 +83,6 @@ namespace Vostok.Tracing
         {
             if (!IsEndless && !span.EndTimestamp.HasValue)
                 span.EndTimestamp = span.BeginTimestamp + stopwatch.Elapsed;
-        }
-
-        private void CleanupSpan()
-        {
-            span.ClearAnnotations();
-            span.ParentSpanId = null;
-            span.EndTimestamp = null;
         }
 
         private void EnrichSpanWithInheritedFields()
