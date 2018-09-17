@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Net;
-using Vostok.Commons.Collections;
-using Vostok.Context;
 using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
@@ -24,11 +22,7 @@ namespace Vostok.Tracing
 
             span = new Span();
 
-            parentSpan = FlowingContext.Globals.Get<FlowingContextStorageSpan>()?.Span;
-            FlowingContext.Globals.Set(new FlowingContextStorageSpan(span));
-
             InitializeSpan();
-            EnrichSpanWithInheritedFields();
             SetDefaultAnnotations();
         }
 
@@ -83,28 +77,6 @@ namespace Vostok.Tracing
         {
             if (!IsEndless && !span.EndTimestamp.HasValue)
                 span.EndTimestamp = span.BeginTimestamp + stopwatch.Elapsed;
-        }
-
-        private void EnrichSpanWithInheritedFields()
-        {
-            if (parentSpan == null)
-                return;
-
-            foreach (var field in configuration.InheritedFieldsWhitelist)
-            {
-                if (parentSpan.Annotations.TryGetValue(field, out var value))
-                    SetAnnotation(field, value);
-            }
-        }
-
-        internal class FlowingContextStorageSpan
-        {
-            public FlowingContextStorageSpan(ISpan span)
-            {
-                Span = span;
-            }
-
-            public ISpan Span { get; set; }
         }
     }
 }
