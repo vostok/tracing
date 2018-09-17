@@ -30,20 +30,16 @@ namespace Vostok.Tracing
 
         public ISpanBuilder BeginSpan()
         {
-            var newScope = BeginContextScope();
-            var spanBuilder = new SpanBuilder(newScope, settings);
+            var contextScope = BeginContextScope(out var oldContext, out var newContext);
 
-            return spanBuilder;
+            return new SpanBuilder(settings, contextScope, newContext, oldContext);
         }
 
-        private TraceContextScope BeginContextScope()
+        private IDisposable BeginContextScope(out TraceContext oldContext, out TraceContext newContext)
         {
-            var oldContext = CurrentContext;
-            var newContext = new TraceContext(oldContext?.TraceId ?? Guid.NewGuid(), Guid.NewGuid());
+            oldContext = CurrentContext;
 
-            CurrentContext = newContext;
-
-            return new TraceContextScope(newContext, oldContext);
+            return FlowingContext.Globals.Use(newContext = new TraceContext(oldContext?.TraceId ?? Guid.NewGuid(), Guid.NewGuid()));
         }
     }
 }

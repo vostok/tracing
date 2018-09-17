@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Net;
+using JetBrains.Annotations;
 using Vostok.Commons.Collections;
 using Vostok.Tracing.Abstractions;
 
@@ -8,26 +9,30 @@ namespace Vostok.Tracing
 {
     internal class SpanBuilder : ISpanBuilder
     {
-        private readonly TraceContextScope contextScope;
-        private readonly TracerSettings configuration;
+        private readonly TracerSettings settings;
+        private readonly IDisposable contextScope;
         private readonly Stopwatch stopwatch;
 
         private volatile SpanMetadata metadata;
         private volatile ImmutableArrayDictionary<string, string> annotations;
 
-        public SpanBuilder(TraceContextScope contextScope, TracerSettings configuration)
+        public SpanBuilder(
+            [NotNull] TracerSettings settings,
+            [NotNull] IDisposable contextScope,
+            [NotNull] TraceContext currentContext,
+            [CanBeNull] TraceContext parentContext)
         {
             this.contextScope = contextScope;
-            this.configuration = configuration;
+            this.settings = settings;
 
             var currentTimestamp = DateTimeOffset.UtcNow;
 
             stopwatch = Stopwatch.StartNew();
 
             metadata = new SpanMetadata(
-                contextScope.Current.TraceId, 
-                contextScope.Current.SpanId,
-                contextScope.Parent?.SpanId,
+                currentContext.TraceId,
+                currentContext.SpanId,
+                parentContext?.SpanId,
                 currentTimestamp,
                 currentTimestamp);
 
@@ -59,7 +64,7 @@ namespace Vostok.Tracing
             {
                 FinalizeSpan();
 
-                configuration.Sender.Send(CurrentSpan);
+                settings.Sender.Send(CurrentSpan);
             }
             finally
             {
