@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Vostok.Context;
 using Vostok.Tracing.Abstractions;
 
@@ -14,13 +13,16 @@ namespace Vostok.Tracing.Helpers
 
         public TraceContext Deserialize(string input)
         {
-            var guids = input.Split(DelimiterArray, StringSplitOptions.RemoveEmptyEntries).Select(Guid.Parse).ToArray();
-            if (guids.Length != 2)
+            var parts = input.Split(DelimiterArray, StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length != 2 ||
+                !Guid.TryParse(parts[0], out var traceId) ||
+                !Guid.TryParse(parts[1], out var spanId))
             {
-                throw new ArgumentException($"Input string has invalid value: {input}");
+                throw new FormatException($"Failed to parse {nameof(TraceContext)} from following input: '{input}'.");
             }
 
-            return new TraceContext(guids[0], guids[1]);
+            return new TraceContext(traceId, spanId);
         }
     }
 }
