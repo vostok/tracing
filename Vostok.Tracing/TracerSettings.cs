@@ -4,7 +4,7 @@ using Vostok.Tracing.Abstractions;
 namespace Vostok.Tracing
 {
     [PublicAPI]
-    public class TraceConfiguration
+    public class TracerSettings
     {
         /// <summary>
         /// <para>Gets or sets the sender used to offload constructed spans. See <see cref="ISpanSender"/> for more details.</para>

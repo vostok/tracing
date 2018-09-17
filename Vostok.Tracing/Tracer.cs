@@ -15,11 +15,11 @@ namespace Vostok.Tracing
             FlowingContext.Configuration.RegisterDistributedGlobal(DistributedGlobalName, new TraceContextSerializer());
         }
 
-        public Tracer(TraceConfiguration traceConfiguration)
+        public Tracer(TracerSettings tracerSettings)
         {
-            ValidateConfiguration(traceConfiguration);
+            ValidateConfiguration(tracerSettings);
 
-            TraceConfiguration = traceConfiguration;
+            TracerSettings = tracerSettings;
         }
 
         public TraceContext CurrentContext
@@ -31,12 +31,12 @@ namespace Vostok.Tracing
         public ISpanBuilder BeginSpan()
         {
             var newScope = BeginContextScope();
-            var spanBuilder = new SpanBuilder(newScope, TraceConfiguration);
+            var spanBuilder = new SpanBuilder(newScope, TracerSettings);
 
             return spanBuilder;
         }
 
-        private TraceConfiguration TraceConfiguration { get; set; }
+        private TracerSettings TracerSettings { get; set; }
 
         private TraceContextScope BeginContextScope()
         {
@@ -48,7 +48,7 @@ namespace Vostok.Tracing
             return new TraceContextScope(newContext, oldContext);
         }
 
-        private void ValidateConfiguration(TraceConfiguration configuration)
+        private void ValidateConfiguration(TracerSettings configuration)
         {
             if (configuration.Sender == null)
             {
