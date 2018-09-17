@@ -3,6 +3,9 @@ using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
+    /// <summary>
+    /// Configuration governing behaviour of <see cref="Tracer"/>.
+    /// </summary>
     [PublicAPI]
     public class TracerSettings
     {
