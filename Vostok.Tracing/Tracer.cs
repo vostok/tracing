@@ -2,6 +2,8 @@
 using JetBrains.Annotations;
 using Vostok.Context;
 using Vostok.Tracing.Abstractions;
+using Vostok.Tracing.Configuration;
+using Vostok.Tracing.Helpers;
 
 namespace Vostok.Tracing
 {

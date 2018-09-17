@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using JetBrains.Annotations;
 using Vostok.Tracing.Abstractions;
+using Vostok.Tracing.Configuration;
 using Vostok.Tracing.Helpers;
 using SpanAnnotations = Vostok.Commons.Collections.ImmutableArrayDictionary<string, string>;
 
