@@ -10,16 +10,16 @@ namespace Vostok.Tracing
     {
         private const string DistributedGlobalName = "vostok.tracing.context";
 
+        private readonly TracerSettings settings;
+
         static Tracer()
         {
             FlowingContext.Configuration.RegisterDistributedGlobal(DistributedGlobalName, new TraceContextSerializer());
         }
 
-        public Tracer(TracerSettings tracerSettings)
+        public Tracer(TracerSettings settings)
         {
-            ValidateConfiguration(tracerSettings);
-
-            TracerSettings = tracerSettings;
+            this.settings = TracerSettingsValidator.Validate(settings);
         }
 
         public TraceContext CurrentContext
@@ -31,12 +31,10 @@ namespace Vostok.Tracing
         public ISpanBuilder BeginSpan()
         {
             var newScope = BeginContextScope();
-            var spanBuilder = new SpanBuilder(newScope, TracerSettings);
+            var spanBuilder = new SpanBuilder(newScope, settings);
 
             return spanBuilder;
         }
-
-        private TracerSettings TracerSettings { get; set; }
 
         private TraceContextScope BeginContextScope()
         {
@@ -46,14 +44,6 @@ namespace Vostok.Tracing
             CurrentContext = newContext;
 
             return new TraceContextScope(newContext, oldContext);
-        }
-
-        private void ValidateConfiguration(TracerSettings configuration)
-        {
-            if (configuration.Sender == null)
-            {
-                throw new ArgumentNullException(nameof(configuration));
-            }
         }
     }
 }
