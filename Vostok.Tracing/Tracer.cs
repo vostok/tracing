@@ -50,7 +50,7 @@ namespace Vostok.Tracing
 
         private void ValidateConfiguration(TraceConfiguration configuration)
         {
-            if (configuration.SpanSender == null)
+            if (configuration.Sender == null)
             {
                 throw new ArgumentNullException(nameof(configuration));
             }

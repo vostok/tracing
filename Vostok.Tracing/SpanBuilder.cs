@@ -59,7 +59,7 @@ namespace Vostok.Tracing
             {
                 FinalizeSpan();
 
-                configuration.SpanSender.Send(CurrentSpan);
+                configuration.Sender.Send(CurrentSpan);
             }
             finally
             {
