@@ -9,13 +9,13 @@ namespace Vostok.Tracing
     internal class SpanBuilder : ISpanBuilder
     {
         private readonly TraceContextScope contextScope;
-        private readonly TraceConfiguration configuration;
+        private readonly TracerSettings configuration;
         private readonly Stopwatch stopwatch;
 
         private volatile SpanMetadata metadata;
         private volatile ImmutableArrayDictionary<string, string> annotations;
 
-        public SpanBuilder(TraceContextScope contextScope, TraceConfiguration configuration)
+        public SpanBuilder(TraceContextScope contextScope, TracerSettings configuration)
         {
             this.contextScope = contextScope;
             this.configuration = configuration;
