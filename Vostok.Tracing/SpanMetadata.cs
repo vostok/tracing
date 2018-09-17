@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 
 namespace Vostok.Tracing
 {
@@ -28,9 +29,11 @@ namespace Vostok.Tracing
 
         public DateTimeOffset? EndTimestamp { get; }
 
+        [NotNull]
         public SpanMetadata SetBeginTimestamp(DateTimeOffset timestamp) =>
             new SpanMetadata(TraceId, SpanId, ParentSpanId, timestamp, EndTimestamp);
 
+        [NotNull]
         public SpanMetadata SetEndTimestamp(DateTimeOffset? timestamp) =>
             new SpanMetadata(TraceId, SpanId, ParentSpanId, BeginTimestamp, timestamp);
     }
