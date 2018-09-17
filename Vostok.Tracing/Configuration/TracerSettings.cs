@@ -1,7 +1,7 @@
 ﻿using JetBrains.Annotations;
 using Vostok.Tracing.Abstractions;
 
-namespace Vostok.Tracing
+namespace Vostok.Tracing.Configuration
 {
     /// <summary>
     /// Configuration governing behaviour of <see cref="Tracer"/>.

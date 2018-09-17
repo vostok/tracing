@@ -2,6 +2,7 @@
 using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
+using Vostok.Tracing.Configuration;
 
 // ReSharper disable AssignNullToNotNullAttribute
 

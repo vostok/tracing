@@ -1,7 +1,7 @@
 ﻿using System;
 using JetBrains.Annotations;
 
-namespace Vostok.Tracing
+namespace Vostok.Tracing.Configuration
 {
     internal static class TracerSettingsValidator
     {
