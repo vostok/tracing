@@ -1,82 +1,166 @@
-﻿// using System;
-// using System.Net.Http;
-// using FluentAssertions;
-// using NSubstitute;
-// using NUnit.Framework;
-// using Vostok.Tracing.Abstractions;
-//
-// namespace Vostok.Tracing.Tests
-// {
-//     public class Tracer_Tests
-//     {
-//         private ISpanSender spanSender;
-//         private ITracer tracer;
-//         private TraceConfiguration traceConfiguration;
-//
-//         private ISpan observedSpan;
-//
-//         [SetUp]
-//         public void SetUp()
-//         {
-//             spanSender = Substitute.For<ISpanSender>();
-//             traceConfiguration = new TraceConfiguration();
-//             traceConfiguration.SpanSender = spanSender;
-//             tracer = new Tracer(traceConfiguration);
-//
-//             observedSpan = null;
-//
-//             spanSender
-//                 .When(r => r.Send(Arg.Any<ISpan>()))
-//                 .Do(info => observedSpan = info.Arg<Span>().Clone());
-//         }
-//
-//         [Test]
-//         public void CurrentContext_should_change_context_when_begin_child_span()
-//         {
-//             using (var span1 = tracer.BeginSpan())
-//             {
-//                 var span1Context = tracer.CurrentContext;
-//                 using (var span2 = tracer.BeginSpan())
-//                 {
-//                     var span2Context = tracer.CurrentContext;
-//
-//                     span1Context.TraceId.Should().Be(span2Context.TraceId);
-//                     span1Context.SpanId.Should().NotBe(span2Context.SpanId);
-//                 }
-//             }
-//         }
-//
-//         [Test]
-//         public void CurrentContext_should_change_context_back_when_end_child_span()
-//         {
-//             using (var span1 = tracer.BeginSpan())
-//             {
-//                 var span1ContextBeforeStartChildSpan = tracer.CurrentContext;
-//
-//                 using (var span2 = tracer.BeginSpan())
-//                 {
-//                     var span2Context = tracer.CurrentContext;
-//
-//                     span1ContextBeforeStartChildSpan.TraceId.Should().Be(span2Context.TraceId);
-//                     span1ContextBeforeStartChildSpan.SpanId.Should().NotBe(span2Context.SpanId);
-//                 }
-//
-//                 var span1ContextAfterStartChildSpan = tracer.CurrentContext;
-//
-//                 span1ContextBeforeStartChildSpan.TraceId.Should().Be(span1ContextAfterStartChildSpan.TraceId);
-//                 span1ContextBeforeStartChildSpan.SpanId.Should().Be(span1ContextAfterStartChildSpan.SpanId);
-//             }
-//         }
-//
-//         [Test]
-//         public void BeginSpan_enrich_span_only_with_default_annotations_when_no_span_configuration()
-//         {
-//             using (var span1 = tracer.BeginSpan())
-//             {
-//             }
-//
-//             observedSpan.Annotations.Should().HaveCount(1);
-//             observedSpan.Annotations.ContainsKey(WellKnownAnnotations.Common.Host).Should().BeTrue();
-//         }
-//     }
-// }
+﻿using System;
+using FluentAssertions;
+using NUnit.Framework;
+using Vostok.Commons.Testing;
+using Vostok.Context;
+using Vostok.Tracing.Abstractions;
+using Vostok.Tracing.Configuration;
+
+// ReSharper disable PossibleNullReferenceException
+// ReSharper disable AssignNullToNotNullAttribute
+// ReSharper disable ObjectCreationAsStatement
+
+namespace Vostok.Tracing.Tests
+{
+    public class Tracer_Tests
+    {
+        private TracerSettings settings;
+        private Tracer tracer;
+
+        [SetUp]
+        public void SetUp()
+        {
+            settings = new TracerSettings();
+            tracer = new Tracer(settings);
+
+            FlowingContext.Globals.Set(null as TraceContext);
+        }
+
+        [Test]
+        public void Should_register_trace_context_as_a_distributed_global_in_flowing_context_configuration()
+        {
+            string serialized;
+
+            var context = new TraceContext(Guid.NewGuid(), Guid.NewGuid());
+
+            using (FlowingContext.Globals.Use(context))
+            {
+                serialized = FlowingContext.SerializeDistributedGlobals();
+            }
+
+            FlowingContext.RestoreDistributedGlobals(serialized);
+
+            FlowingContext.Globals.Get<TraceContext>().Should().BeEquivalentTo(context);
+        }
+
+        [Test]
+        public void Should_validate_settings_in_constructor()
+        {
+            new Action(() => new Tracer(new TracerSettings {Sender = null}))
+                .Should()
+                .Throw<Exception>()
+                .Which.ShouldBePrinted();
+        }
+
+        [Test]
+        public void CurrentContext_property_getter_should_return_a_global_from_flowing_context()
+        {
+            var context = new TraceContext(Guid.NewGuid(), Guid.NewGuid());
+
+            using (FlowingContext.Globals.Use(context))
+            {
+                tracer.CurrentContext.Should().BeSameAs(context);
+            }
+        }
+
+        [Test]
+        public void CurrentContext_property_setter_should_set_a_global_in_flowing_context()
+        {
+            var context = new TraceContext(Guid.NewGuid(), Guid.NewGuid());
+
+            tracer.CurrentContext = context;
+
+            FlowingContext.Globals.Get<TraceContext>().Should().BeSameAs(context);
+        }
+
+        [Test]
+        public void BeginSpan_should_create_a_new_context_if_none_is_present()
+        {
+            tracer.CurrentContext.Should().BeNull();
+
+            tracer.BeginSpan();
+
+            tracer.CurrentContext.Should().NotBeNull();
+        }
+
+        [Test]
+        public void BeginSpan_should_inherit_trace_id_from_existing_context()
+        {
+            tracer.BeginSpan();
+
+            var traceId = tracer.CurrentContext.TraceId;
+
+            tracer.BeginSpan();
+
+            tracer.CurrentContext.TraceId.Should().Be(traceId);
+        }
+
+        [Test]
+        public void BeginSpan_should_generate_new_span_id_when_branching_from_existing_context()
+        {
+            tracer.BeginSpan();
+
+            var spanId = tracer.CurrentContext.SpanId;
+
+            tracer.BeginSpan();
+
+            tracer.CurrentContext.SpanId.Should().NotBe(spanId);
+        }
+
+        [Test]
+        public void BeginSpan_should_enable_trace_context_scoping_via_builder_disposal()
+        {
+            tracer.CurrentContext.Should().BeNull();
+
+            using (tracer.BeginSpan())
+            {
+                var context1 = tracer.CurrentContext;
+
+                context1.Should().NotBeNull();
+
+                using (tracer.BeginSpan())
+                {
+                    var context2 = tracer.CurrentContext;
+
+                    context2.Should().NotBeSameAs(context1);
+
+                    using (tracer.BeginSpan())
+                    {
+                        var context3 = tracer.CurrentContext;
+
+                        context3.Should().NotBeSameAs(context2);
+                    }
+
+                    tracer.CurrentContext.Should().BeSameAs(context2);
+                }
+
+                tracer.CurrentContext.Should().BeSameAs(context1);
+            }
+
+            tracer.CurrentContext.Should().BeNull();
+        }
+
+        [Test]
+        public void BeginSpan_should_correctly_establish_parent_span_relations()
+        {
+            using (var builder1 = tracer.BeginSpan())
+            {
+                var context1 = tracer.CurrentContext;
+
+                builder1.CurrentSpan.ParentSpanId.Should().BeNull();
+
+                using (var builder2 = tracer.BeginSpan())
+                {
+                    var context2 = tracer.CurrentContext;
+
+                    builder2.CurrentSpan.ParentSpanId.Should().Be(context1.SpanId);
+
+                    using (var builder3 = tracer.BeginSpan())
+                    {
+                        builder3.CurrentSpan.ParentSpanId.Should().Be(context2.SpanId);
+                    }
+                }
+            }
+        }
+    }
+}

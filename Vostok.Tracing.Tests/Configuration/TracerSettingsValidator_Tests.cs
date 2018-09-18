@@ -6,7 +6,7 @@ using Vostok.Tracing.Configuration;
 
 // ReSharper disable AssignNullToNotNullAttribute
 
-namespace Vostok.Tracing.Tests
+namespace Vostok.Tracing.Tests.Configuration
 {
     [TestFixture]
     internal class TracerSettingsValidator_Tests
