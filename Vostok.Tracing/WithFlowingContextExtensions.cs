@@ -13,6 +13,29 @@ namespace Vostok.Tracing
     public static class WithFlowingContextExtensions
     {
         /// <summary>
+        /// <para>Returns a wrapper tracer that adds the value of <see cref="FlowingContext"/> global of given type <typeparamref name="T"/> to each returned <see cref="ISpanBuilder"/> as annotation.</para>
+        /// <para>Uses given <paramref name="annotationName"/> as the name for added span annotation.</para>
+        /// <para>By default, existing properties are not overwritten. This can be changed via <paramref name="allowOverwrite"/> parameter.</para>
+        /// <para>By default, <c>null</c> values are not added to spans. This can be changed via <paramref name="allowNullValues"/> parameter.</para>
+        /// </summary>
+        [Pure]
+        public static ITracer WithFlowingContextGlobal<T>(
+            [NotNull] this ITracer tracer,
+            [NotNull] string annotationName,
+            bool allowOverwrite = false,
+            bool allowNullValues = false)
+        {
+            if (tracer == null)
+                throw new ArgumentNullException(nameof(tracer));
+
+            if (annotationName == null)
+                throw new ArgumentNullException(nameof(annotationName));
+
+            return tracer.WithAnnotation(annotationName, 
+                () => FlowingContext.Globals.Get<T>()?.ToString(), allowOverwrite, allowNullValues);
+        }
+
+        /// <summary>
         /// <para>Returns a wrapper tracer that adds the value of <see cref="FlowingContext"/> property with given <param name="contextPropertyName"></param> to each returned <see cref="ISpanBuilder"/> as annotation.</para>
         /// <para>By default, the value is added to span with <paramref name="contextPropertyName"/>. This can be changed by providing a non-null <paramref name="annotationName"/> parameter.</para>
         /// <para>By default, existing properties are not overwritten. This can be changed via <paramref name="allowOverwrite"/> parameter.</para>
@@ -34,29 +57,6 @@ namespace Vostok.Tracing
 
             return tracer.WithAnnotation(annotationName ?? contextPropertyName, 
                 () => GetContextPropertyOrNull(contextPropertyName), allowOverwrite, allowNullValues);
-        }
-
-        /// <summary>
-        /// <para>Returns a wrapper tracer that adds the value of <see cref="FlowingContext"/> global of given type <typeparamref name="T"/> to each returned <see cref="ISpanBuilder"/> as annotation.</para>
-        /// <para>Uses given <paramref name="annotationName"/> as the name for added span annotation.</para>
-        /// <para>By default, existing properties are not overwritten. This can be changed via <paramref name="allowOverwrite"/> parameter.</para>
-        /// <para>By default, <c>null</c> values are not added to spans. This can be changed via <paramref name="allowNullValues"/> parameter.</para>
-        /// </summary>
-        [Pure]
-        public static ITracer WithFlowingContextGlobal<T>(
-            [NotNull] this ITracer tracer,
-            [NotNull] string annotationName,
-            bool allowOverwrite = false,
-            bool allowNullValues = false)
-        {
-            if (tracer == null)
-                throw new ArgumentNullException(nameof(tracer));
-
-            if (annotationName == null)
-                throw new ArgumentNullException(nameof(annotationName));
-
-            return tracer.WithAnnotation(annotationName, 
-                () => FlowingContext.Globals.Get<T>()?.ToString(), allowOverwrite, allowNullValues);
         }
 
         /// <summary>
