@@ -1,308 +1,289 @@
-﻿// using System;
-// using System.Collections.Generic;
-// using System.Linq;
-// using FluentAssertions;
-// using NSubstitute;
-// using NUnit.Framework;
-// using Vostok.Commons.Collections;
-// using Vostok.Context;
-// using Vostok.Tracing.Abstractions;
-//
-// namespace Vostok.Tracing.Tests
-// {
-//     public class SpanBuilder_Tests
-//     {
-//         private readonly Guid traceId = Guid.NewGuid();
-//         private readonly Guid spanId = Guid.NewGuid();
-//         private readonly Guid parentSpanId = Guid.NewGuid();
-//         private ISpanSender spanSender;
-//         private UnboundedObjectPool<Span> objectPool;
-//         private TraceConfiguration traceConfiguration;
-//
-//         private ISpan observedSpan;
-//
-//         [OneTimeSetUp]
-//         public void OneTimeSetUp()
-//         {
-//             objectPool = new UnboundedObjectPool<Span>(() => new Span());
-//         }
-//
-//         [SetUp]
-//         public void SetUp()
-//         {
-//             spanSender = Substitute.For<ISpanSender>();
-//             traceConfiguration = new TraceConfiguration()
-//             {
-//                 SpanSender = spanSender
-//             };
-//             FlowingContext.Globals.Set<TraceContext>(null);
-//             FlowingContext.Globals.Set<SpanBuilder.FlowingContextStorageSpan>(null);
-//
-//             observedSpan = null;
-//
-//             spanSender
-//                 .When(r => r.Send(Arg.Any<ISpan>()))
-//                 .Do(info => observedSpan = info.Arg<Span>().Clone());
-//         }
-//
-//         [Test]
-//         public void Should_send_span_by_default()
-//         {
-//             using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceConfiguration))
-//             {
-//             }
-//
-//             spanSender.Received(1).Send(Arg.Any<ISpan>());
-//         }
-//
-//         [Test]
-//         public void Should_send_span_with_endtimestamp_when_span_is_not_endless()
-//         {
-//             using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceConfiguration))
-//             {
-//             }
-//
-//             observedSpan.EndTimestamp.Should().NotBeNull();
-//         }
-//
-//         [Test]
-//         public void Should_send_span_without_endtimestamp_when_span_is_endless()
-//         {
-//             using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(), objectPool, traceConfiguration))
-//             {
-//                 spanBuilder.SetEndTimestamp(null);
-//             }
-//
-//             observedSpan.EndTimestamp.Should().BeNull();
-//         }
-//
-//         [Test]
-//         public void Should_dispose_tracecontextscope()
-//         {
-//             var traceContextScope = CreateTraceContextScope();
-//
-//             using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
-//             {
-//             }
-//
-//             var context = FlowingContext.Globals.Get<TraceContext>();
-//             context.Should().BeNull();
-//         }
-//
-//         [Test]
-//         public void Should_dispose_tracecontextscope_when_tracereporter_failed()
-//         {
-//             spanSender.When(x => x.Send(Arg.Any<ISpan>())).Do(x => throw new Exception());
-//
-//             var traceContextScope = CreateTraceContextScope();
-//
-//             Assert.Throws<Exception>(
-//                 () =>
-//                 {
-//                     using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
-//                     {
-//                     }
-//                 });
-//
-//             var context = FlowingContext.Globals.Get<TraceContext>();
-//             context.Should().BeNull();
-//         }
-//
-//         [Test]
-//         public void Should_send_span_with_parentspanid_when_parentcontextscope_exist()
-//         {
-//             var traceContextScope = CreateTraceContextScope(parentSpanId: parentSpanId);
-//
-//             using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
-//             {
-//             }
-//
-//             observedSpan.ParentSpanId.Should().Be(parentSpanId);
-//         }
-//
-//         [Test]
-//         public void Should_send_span_with_traceid_and_spanid_from_currentscope()
-//         {
-//             var traceContextScope = CreateTraceContextScope(traceId, spanId);
-//
-//             using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
-//             {
-//             }
-//
-//             observedSpan.TraceId.Should().Be(traceId);
-//             observedSpan.SpanId.Should().Be(spanId);
-//         }
-//
-//         [Test]
-//         public void Should_send_span_with_endtimestamp_grater_then_begintimestamp()
-//         {
-//             var traceContextScope = CreateTraceContextScope();
-//
-//             using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
-//             {
-//             }
-//
-//             observedSpan.EndTimestamp.Should().BeAfter(observedSpan.BeginTimestamp);
-//         }
-//
-//         [Test]
-//         public void Should_send_span_with_empty_annotations_when_no_annotation_added()
-//         {
-//             var traceContextScope = CreateTraceContextScope();
-//
-//             using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
-//             {
-//             }
-//
-//             observedSpan.Annotations.Should().HaveCount(1);
-//             observedSpan.Annotations.ContainsKey(WellKnownAnnotations.Common.Host).Should().BeTrue();
-//         }
-//
-//         [Test]
-//         public void Should_send_span_with_added_annotation_after_adding()
-//         {
-//             var traceContextScope = CreateTraceContextScope();
-//
-//             const string customAnnotationKey = "key";
-//             const string customAnnotationValue = "value";
-//
-//             using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
-//             {
-//                 spanBuilder.SetAnnotation(customAnnotationKey, customAnnotationValue);
-//             }
-//
-//             observedSpan.Annotations.ContainsKey(customAnnotationKey).Should().BeTrue();
-//             observedSpan.Annotations[customAnnotationKey].Should().Be(customAnnotationValue);
-//         }
-//
-//         [Test]
-//         public void Should_send_span_with_custom_begintimestamp_when_called()
-//         {
-//             var traceContextScope = CreateTraceContextScope();
-//
-//             var timestamp = new DateTimeOffset(2018, 07, 09, 09, 0, 0, new TimeSpan(5, 0, 0));
-//
-//             using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
-//             {
-//                 spanBuilder.SetBeginTimestamp(timestamp);
-//             }
-//
-//             observedSpan.BeginTimestamp.Should().Be(timestamp);
-//         }
-//
-//         [Test]
-//         public void Should_send_span_with_custom_endtimestamp_when_called()
-//         {
-//             var traceContextScope = CreateTraceContextScope();
-//
-//             var timestamp = new DateTimeOffset(2018, 07, 09, 09, 0, 0, new TimeSpan(5, 0, 0));
-//
-//             using (var spanBuilder = new SpanBuilder(traceContextScope, objectPool, traceConfiguration))
-//             {
-//                 spanBuilder.SetEndTimestamp(timestamp);
-//             }
-//
-//             observedSpan.EndTimestamp.Should().Be(timestamp);
-//         }
-//
-//         [Test]
-//         public void Should_inherit_annotation_from_parent_span_when_whitelist_contain_key()
-//         {
-//             SetTraceContextInheritedFieldsWhitelist("name1");
-//
-//             using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
-//             {
-//                 spanBuilder.SetAnnotation("name1", "value1");
-//                 using (var sp2 = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
-//                 {
-//                 }
-//
-//                 observedSpan.Annotations.ContainsKey("name1").Should().BeTrue();
-//                 observedSpan.Annotations["name1"].Should().Be("value1");
-//             }
-//         }
-//
-//         [Test]
-//         public void Should_not_inherit_annotation_from_parent_span_when_whitelist_is_empty()
-//         {
-//             SetTraceContextInheritedFieldsWhitelist();
-//
-//             using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
-//             {
-//                 spanBuilder.SetAnnotation("name1", "value1");
-//                 using (var sp2 = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
-//                 {
-//                 }
-//
-//                 observedSpan.Annotations.ContainsKey("name1").Should().BeFalse();
-//             }
-//         }
-//
-//         [Test]
-//         public void Should_not_inherit_annotation_from_parent_span_when_key_not_in_spanbuilder()
-//         {
-//             SetTraceContextInheritedFieldsWhitelist("nameX");
-//
-//             using (var spanBuilder = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
-//             {
-//                 spanBuilder.SetAnnotation("name1", "value1");
-//                 using (var sp2 = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
-//                 {
-//                 }
-//
-//                 observedSpan.Annotations.ContainsKey("nameX").Should().BeFalse();
-//             }
-//         }
-//
-//         [Test]
-//         public void Should_inherit_annotation_through_three_levels()
-//         {
-//             SetTraceContextInheritedFieldsWhitelist("name1");
-//
-//             using (var parentSpan = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
-//             {
-//                 parentSpan.SetAnnotation("name1", "value1");
-//                 using (var level1Span = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
-//                 {
-//                     using (var level2Span = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
-//                     {
-//                         using (var level3Span = new SpanBuilder(CreateTraceContextScope(traceId), objectPool, traceConfiguration))
-//                         {
-//                         }
-//
-//                         observedSpan.Annotations.ContainsKey("name1").Should().BeTrue();
-//                         observedSpan.Annotations["name1"].Should().Be("value1");
-//                     }
-//
-//                     observedSpan.Annotations.ContainsKey("name1").Should().BeTrue();
-//                     observedSpan.Annotations["name1"].Should().Be("value1");
-//                 }
-//
-//                 observedSpan.Annotations.ContainsKey("name1").Should().BeTrue();
-//                 observedSpan.Annotations["name1"].Should().Be("value1");
-//             }
-//         }
-//
-//         private static TraceContextScope CreateTraceContextScope(Guid? traceId = null, Guid? spanId = null, Guid? parentSpanId = null)
-//         {
-//             var currentContext = new TraceContext(traceId ?? Guid.NewGuid(), spanId ?? Guid.NewGuid());
-//             TraceContext parentTraceContext = null;
-//             if (parentSpanId.HasValue)
-//             {
-//                 parentTraceContext = new TraceContext(currentContext.TraceId, parentSpanId.Value);
-//             }
-//
-//             var traceContextScope = new TraceContextScope(currentContext, parentTraceContext);
-//             return traceContextScope;
-//         }
-//
-//         private void SetTraceContextInheritedFieldsWhitelist(params string[] inheritedFieldsWhitelist)
-//         {
-//             traceConfiguration = new TraceConfiguration()
-//             {
-//                 SpanSender = spanSender,
-//                 InheritedFieldsWhitelist = new HashSet<string>(inheritedFieldsWhitelist)
-//             };
-//         }
-//     }
-// }
+﻿using System;
+using System.Net;
+using System.Threading;
+using FluentAssertions;
+using FluentAssertions.Extensions;
+using NSubstitute;
+using NUnit.Framework;
+using Vostok.Tracing.Abstractions;
+using Vostok.Tracing.Configuration;
+
+// ReSharper disable PossibleInvalidOperationException
+
+namespace Vostok.Tracing.Tests
+{
+    public class SpanBuilder_Tests
+    {
+        private TracerSettings settings;
+        private TraceContext parentContext;
+        private TraceContext currentContext;
+        private IDisposable contextScope;
+        private ISpanSender sender;
+        private ISpan observedSpan;
+
+        private SpanBuilder builder;
+
+        [SetUp]
+        public void TestSetup()
+        {
+            observedSpan = null;
+
+            sender = Substitute.For<ISpanSender>();
+            sender.When(s => s.Send(Arg.Any<ISpan>())).Do(info => observedSpan = info.Arg<ISpan>());
+
+            settings = new TracerSettings { Sender = sender };
+
+            parentContext = new TraceContext(Guid.NewGuid(), Guid.NewGuid());
+            currentContext = new TraceContext(parentContext.TraceId, Guid.NewGuid());
+            contextScope = Substitute.For<IDisposable>();
+
+            builder = new SpanBuilder(settings, contextScope, currentContext, parentContext);
+        }
+
+        [Test]
+        public void Should_set_correct_traceId_for_span_upon_construction()
+        {
+            builder.CurrentSpan.TraceId.Should().Be(currentContext.TraceId);
+        }
+
+        [Test]
+        public void Should_set_correct_spanId_for_span_upon_construction()
+        {
+            builder.CurrentSpan.SpanId.Should().Be(currentContext.SpanId);
+        }
+
+        [Test]
+        public void Should_set_correct_parent_spanId_for_span_upon_construction_when_there_is_a_parent_context()
+        {
+            builder.CurrentSpan.ParentSpanId.Should().Be(parentContext.SpanId);
+        }
+
+        [Test]
+        public void Should_set_correct_parent_spanId_for_span_upon_construction_when_there_is_no_parent_context()
+        {
+            builder = new SpanBuilder(settings, contextScope, currentContext, null);
+
+            builder.CurrentSpan.ParentSpanId.Should().BeNull();
+        }
+
+        [Test]
+        public void Should_set_correct_begin_timestamp_for_span_upon_construction()
+        {
+            builder.CurrentSpan.BeginTimestamp.Should().BeCloseTo(DateTimeOffset.UtcNow, 5.Seconds());
+        }
+
+        [Test]
+        public void Should_set_host_annotation_with_value_from_settings_for_span_upon_construction()
+        {
+            settings.Host = Guid.NewGuid().ToString();
+
+            InitializeBuilder();
+
+            builder.CurrentSpan.Annotations[WellKnownAnnotations.Common.Host].Should().Be(settings.Host);
+        }
+
+        [Test]
+        public void Should_set_host_annotation_with_default_value_for_span_upon_construction_when_not_configured_in_settings()
+        {
+            builder.CurrentSpan.Annotations[WellKnownAnnotations.Common.Host].Should().Be(Dns.GetHostName());
+        }
+
+        [Test]
+        public void Should_set_application_annotation_with_value_from_settings_for_span_upon_construction()
+        {
+            settings.Application = Guid.NewGuid().ToString();
+
+            InitializeBuilder();
+
+            builder.CurrentSpan.Annotations[WellKnownAnnotations.Common.Application].Should().Be(settings.Application);
+        }
+
+        [Test]
+        public void Should_not_set_application_annotation_for_span_upon_construction_when_not_configured_in_settings()
+        {
+            builder.CurrentSpan.Annotations.ContainsKey(WellKnownAnnotations.Common.Application).Should().BeFalse();
+        }
+
+        [Test]
+        public void Should_set_environment_annotation_with_value_from_settings_for_span_upon_construction()
+        {
+            settings.Environment = Guid.NewGuid().ToString();
+
+            InitializeBuilder();
+
+            builder.CurrentSpan.Annotations[WellKnownAnnotations.Common.Environment].Should().Be(settings.Environment);
+        }
+
+        [Test]
+        public void Should_not_set_environment_annotation_for_span_upon_construction_when_not_configured_in_settings()
+        {
+            builder.CurrentSpan.Annotations.ContainsKey(WellKnownAnnotations.Common.Environment).Should().BeFalse();
+        }
+
+        [Test]
+        public void Should_not_send_span_anywhere_upon_construction()
+        {
+            sender.ReceivedCalls().Should().BeEmpty();
+        }
+
+        [Test]
+        public void SetAnnotation_should_be_able_to_add_new_annotations()
+        {
+            builder.SetAnnotation("k1", "v1");
+            builder.SetAnnotation("k2", "v2");
+            builder.SetAnnotation("k3", "v3");
+
+            builder.CurrentSpan.Annotations.Keys.Should().Contain(new[] {"k1", "k2", "k3"});
+        }
+
+        [Test]
+        public void SetAnnotation_should_overwrite_existing_values_by_default()
+        {
+            builder.SetAnnotation("k", "v1");
+            builder.SetAnnotation("k", "v2");
+
+            builder.CurrentSpan.Annotations["k"].Should().Be("v2");
+        }
+
+        [Test]
+        public void SetAnnotation_should_not_overwrite_existing_values_when_explicitly_asked_not_to()
+        {
+            builder.SetAnnotation("k", "v1");
+            builder.SetAnnotation("k", "v2", false);
+
+            builder.CurrentSpan.Annotations["k"].Should().Be("v1");
+        }
+
+        [Test]
+        public void Dispose_should_send_constructed_span()
+        {
+            builder.Dispose();
+
+            sender.Received(1).Send(Arg.Any<ISpan>());
+        }
+
+        [Test]
+        public void Dispose_should_dispose_trace_context_scope()
+        {
+            builder.Dispose();
+
+            contextScope.Received(1).Dispose();
+        }
+
+        [Test]
+        public void Dispose_should_dispose_trace_context_scope_even_when_sender_fails()
+        {
+            sender
+                .When(s => s.Send(Arg.Any<ISpan>()))
+                .Throw(new Exception("I fail."));
+
+            try
+            {
+                builder.Dispose();
+            }
+            catch (Exception error)
+            {
+                Console.Out.WriteLine(error);
+            }
+
+            contextScope.Received(1).Dispose();
+        }
+
+        [Test]
+        public void Dispose_should_provide_constructed_span_with_end_timestamp()
+        {
+            Thread.Sleep(1);
+            
+            builder.Dispose();
+
+            observedSpan.Should().NotBeNull();
+            observedSpan.EndTimestamp.Should().HaveValue().And.Subject.Value.Should().BeAfter(observedSpan.BeginTimestamp);
+        }
+
+        [Test]
+        public void Dispose_should_send_a_span_equivalent_to_current_constructed_span_except_for_end_timestamp()
+        {
+            builder.SetAnnotation("k1", "v1");
+            builder.SetAnnotation("k2", "v2");
+            builder.SetAnnotation("k3", "v3");
+
+            var currentSpan = builder.CurrentSpan;
+
+            builder.Dispose();
+
+            observedSpan.Should().BeEquivalentTo(currentSpan, options => options.Excluding(span => span.EndTimestamp));
+        }
+
+        [Test]
+        public void SetBeginTimestamp_should_modify_constructed_span_begin_timestamp()
+        {
+            var timestamp = DateTimeOffset.UtcNow + 5.Hours();
+
+            builder.SetBeginTimestamp(timestamp);
+
+            builder.CurrentSpan.BeginTimestamp.Should().Be(timestamp);
+
+            builder.Dispose();
+
+            observedSpan.BeginTimestamp.Should().Be(timestamp);
+        }
+
+        [Test]
+        public void SetEndTimestamp_should_modify_constructed_span_end_timestamp()
+        {
+            var timestamp = DateTimeOffset.UtcNow - 5.Hours();
+
+            builder.SetEndTimestamp(timestamp);
+
+            builder.CurrentSpan.EndTimestamp.Should().Be(timestamp);
+
+            builder.Dispose();
+
+            observedSpan.EndTimestamp.Should().Be(timestamp);
+        }
+
+        [Test]
+        public void SetEndTimestamp_should_be_able_to_set_a_null_value_that_wont_be_overridden_during_dispose()
+        {
+            builder.SetEndTimestamp(null);
+
+            builder.CurrentSpan.EndTimestamp.Should().BeNull();
+
+            builder.Dispose();
+
+            observedSpan.EndTimestamp.Should().BeNull();
+        }
+
+        [Test]
+        public void CurrentSpan_property_should_return_an_immutable_value_unaffected_by_further_annotation_changes()
+        {
+            builder.SetAnnotation("k1", "v1");
+
+            var snapshot = builder.CurrentSpan;
+
+            builder.SetAnnotation("k2", "v2");
+
+            snapshot.Annotations.ContainsKey("k2").Should().BeFalse();
+        }
+
+        [Test]
+        public void CurrentSpan_property_should_return_an_immutable_value_unaffected_by_further_timestamp()
+        {
+            var snapshot = builder.CurrentSpan;
+
+            var beginTimestamp = snapshot.BeginTimestamp;
+            var endTimestamp = snapshot.EndTimestamp;
+
+            builder.SetBeginTimestamp(beginTimestamp + 1.Hours());
+            builder.SetEndTimestamp(endTimestamp + 1.Hours());
+
+            snapshot.BeginTimestamp.Should().Be(beginTimestamp);
+            snapshot.EndTimestamp.Should().Be(endTimestamp);
+        }
+
+        private void InitializeBuilder()
+        {
+            builder = new SpanBuilder(settings, contextScope, currentContext, parentContext);
+        }
+    }
+}

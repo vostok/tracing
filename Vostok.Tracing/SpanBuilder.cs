@@ -50,7 +50,7 @@ namespace Vostok.Tracing
 
         public void Dispose()
         {
-            if (metadata.EndTimestamp.HasValue)
+            if (metadata.EndTimestamp == DateTimeOffset.MinValue)
                 metadata = metadata.SetEndTimestamp(metadata.BeginTimestamp + watch.Elapsed);
 
             using (contextScope)
@@ -62,14 +62,15 @@ namespace Vostok.Tracing
         private static SpanMetadata ConstructInitialMetadata([NotNull] TraceContext currentContext, [CanBeNull] TraceContext parentContext)
         {
             // TODO(iloktionov): Use something more precise on Windows and .NET Framework.
-            var currentTimestamp = DateTimeOffset.UtcNow;
+            var beginTimestamp = DateTimeOffset.UtcNow;
+            var endTimestamp = DateTimeOffset.MinValue;
 
             return new SpanMetadata(
                 currentContext.TraceId,
                 currentContext.SpanId,
                 parentContext?.SpanId,
-                currentTimestamp,
-                currentTimestamp);
+                beginTimestamp,
+                endTimestamp);
         }
 
         private static SpanAnnotations ConstructInitialAnnotations([NotNull] TracerSettings settings)
