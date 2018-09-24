@@ -69,7 +69,8 @@ namespace Vostok.Tracing.Tests
         [Test]
         public void Should_set_correct_begin_timestamp_for_span_upon_construction()
         {
-            builder.CurrentSpan.BeginTimestamp.Should().BeCloseTo(DateTimeOffset.UtcNow, 5.Seconds());
+            builder.CurrentSpan.BeginTimestamp.Should().BeCloseTo(DateTimeOffset.Now, 1.Seconds());
+            builder.CurrentSpan.BeginTimestamp.Offset.Should().Be(DateTimeOffset.Now.Offset);
         }
 
         [Test]

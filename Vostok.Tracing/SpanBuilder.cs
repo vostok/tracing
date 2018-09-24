@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
+using Vostok.Commons.Time;
 using Vostok.Tracing.Abstractions;
 using Vostok.Tracing.Configuration;
 using Vostok.Tracing.Helpers;
@@ -61,8 +62,7 @@ namespace Vostok.Tracing
 
         private static SpanMetadata ConstructInitialMetadata([NotNull] TraceContext currentContext, [CanBeNull] TraceContext parentContext)
         {
-            // TODO(iloktionov): Use something more precise on Windows and .NET Framework.
-            var beginTimestamp = DateTimeOffset.UtcNow;
+            var beginTimestamp = PreciseDateTime.Now;
             var endTimestamp = DateTimeOffset.MinValue;
 
             return new SpanMetadata(
