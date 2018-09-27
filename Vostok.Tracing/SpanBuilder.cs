@@ -5,7 +5,7 @@ using Vostok.Commons.Time;
 using Vostok.Tracing.Abstractions;
 using Vostok.Tracing.Configuration;
 using Vostok.Tracing.Helpers;
-using SpanAnnotations = Vostok.Commons.Collections.ImmutableArrayDictionary<string, string>;
+using SpanAnnotations = Vostok.Commons.Collections.ImmutableArrayDictionary<string, object>;
 
 namespace Vostok.Tracing
 {
@@ -34,7 +34,7 @@ namespace Vostok.Tracing
 
         public ISpan CurrentSpan => new Span(metadata, annotations);
 
-        public void SetAnnotation(string key, string value, bool allowOverwrite = true)
+        public void SetAnnotation(string key, object value, bool allowOverwrite = true)
         {
             annotations = annotations.Set(key, value, allowOverwrite);
         }

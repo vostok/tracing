@@ -8,9 +8,9 @@ namespace Vostok.Tracing
     internal class Span : ISpan
     {
         private readonly SpanMetadata metadata;
-        private readonly ImmutableArrayDictionary<string, string> annotations;
+        private readonly ImmutableArrayDictionary<string, object> annotations;
 
-        public Span(SpanMetadata metadata, ImmutableArrayDictionary<string, string> annotations)
+        public Span(SpanMetadata metadata, ImmutableArrayDictionary<string, object> annotations)
         {
             this.metadata = metadata;
             this.annotations = annotations;
@@ -26,6 +26,6 @@ namespace Vostok.Tracing
 
         public DateTimeOffset? EndTimestamp => metadata.EndTimestamp;
 
-        public IReadOnlyDictionary<string, string> Annotations => annotations;
+        public IReadOnlyDictionary<string, object> Annotations => annotations;
     }
 }

@@ -176,7 +176,7 @@ namespace Vostok.Tracing
                 builder.Dispose();
             }
 
-            public void SetAnnotation(string key, string value, bool allowOverwrite = true)
+            public void SetAnnotation(string key, object value, bool allowOverwrite = true)
             {
                 builder.SetAnnotation(key, value, allowOverwrite);
             }
