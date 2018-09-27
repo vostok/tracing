@@ -7,8 +7,6 @@ using Vostok.Tracing.Abstractions;
 
 namespace Vostok.Tracing
 {
-    // TODO(iloktionov): Use PropertyValueFormatter (same as in Vostok.Logging.Formatting) here.
-
     [PublicAPI]
     public static class WithFlowingContextExtensions
     {
@@ -32,7 +30,7 @@ namespace Vostok.Tracing
                 throw new ArgumentNullException(nameof(annotationName));
 
             return tracer.WithAnnotation(annotationName, 
-                () => FlowingContext.Globals.Get<T>()?.ToString(), allowOverwrite, allowNullValues);
+                () => FlowingContext.Globals.Get<T>(), allowOverwrite, allowNullValues);
         }
 
         /// <summary>
@@ -94,24 +92,24 @@ namespace Vostok.Tracing
             if (tracer == null)
                 throw new ArgumentNullException(nameof(tracer));
 
-            return tracer.WithAnnotations(() => FlowingContext.Properties.Current.Select(pair => (pair.Key, pair.Value?.ToString())), allowOverwrite, allowNullValues);
+            return tracer.WithAnnotations(() => FlowingContext.Properties.Current.Select(pair => (pair.Key, pair.Value)), allowOverwrite, allowNullValues);
         }
 
         [CanBeNull]
-        private static string GetContextPropertyOrNull(string name)
+        private static object GetContextPropertyOrNull(string name)
         {
-            return FlowingContext.Properties.Current.TryGetValue(name, out var value) ? value?.ToString() : null;
+            return FlowingContext.Properties.Current.TryGetValue(name, out var value) ? value : null;
         }
 
         [NotNull]
-        private static IEnumerable<(string, string)> GetContextProperties(string[] names)
+        private static IEnumerable<(string, object)> GetContextProperties(string[] names)
         {
             var currentProperties = FlowingContext.Properties.Current;
 
             foreach (var name in names)
             {
                 if (currentProperties.TryGetValue(name, out var value))
-                    yield return (name, value?.ToString());
+                    yield return (name, value);
             }
         }
     }
