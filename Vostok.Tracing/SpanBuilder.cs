@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
 using JetBrains.Annotations;
+using Vostok.Commons.Environment;
 using Vostok.Commons.Time;
 using Vostok.Tracing.Abstractions;
 using Vostok.Tracing.Configuration;
-using Vostok.Tracing.Helpers;
 using SpanAnnotations = Vostok.Commons.Collections.ImmutableArrayDictionary<string, object>;
 
 namespace Vostok.Tracing
@@ -76,7 +76,7 @@ namespace Vostok.Tracing
         private static SpanAnnotations ConstructInitialAnnotations([NotNull] TracerSettings settings)
         {
             var annotations = SpanAnnotations.Empty
-                .Set(WellKnownAnnotations.Common.Host, settings.Host ?? EnvironmentHelper.Host);
+                .Set(WellKnownAnnotations.Common.Host, settings.Host ?? EnvironmentInfo.Host);
 
             if (settings.Environment != null)
                 annotations = annotations.Set(WellKnownAnnotations.Common.Environment, settings.Environment);
