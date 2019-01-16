@@ -16,7 +16,7 @@
 
   <PropertyGroup>
     <Title>Vostok.Tracing</Title>
-    <Description>Vostok.Tracing</Description>
+    <Description>This library contains an implementation of core tracing interface (ITracer).</Description>
   </PropertyGroup>
 
   <PropertyGroup>
