@@ -75,13 +75,11 @@ namespace Vostok.Tracing
         private static SpanAnnotations ConstructInitialAnnotations([NotNull] TracerSettings settings)
         {
             var annotations = SpanAnnotations.Empty
-                .Set(WellKnownAnnotations.Common.Host, settings.Host ?? EnvironmentInfo.Host);
+                .Set(WellKnownAnnotations.Common.Host, settings.Host ?? EnvironmentInfo.Host)
+                .Set(WellKnownAnnotations.Common.Application, settings.Application ?? EnvironmentInfo.Application);
 
             if (settings.Environment != null)
                 annotations = annotations.Set(WellKnownAnnotations.Common.Environment, settings.Environment);
-
-            if (settings.Application != null)
-                annotations = annotations.Set(WellKnownAnnotations.Common.Application, settings.Application);
 
             return annotations;
         }
