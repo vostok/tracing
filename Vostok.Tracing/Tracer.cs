@@ -2,8 +2,6 @@
 using JetBrains.Annotations;
 using Vostok.Context;
 using Vostok.Tracing.Abstractions;
-using Vostok.Tracing.Configuration;
-using Vostok.Tracing.Helpers;
 
 namespace Vostok.Tracing
 {
@@ -21,7 +19,7 @@ namespace Vostok.Tracing
 
         public Tracer(TracerSettings settings)
         {
-            this.settings = TracerSettingsValidator.Validate(settings);
+            this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
         }
 
         public TraceContext CurrentContext

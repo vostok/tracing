@@ -1,7 +1,8 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
 using Vostok.Tracing.Abstractions;
 
-namespace Vostok.Tracing.Configuration
+namespace Vostok.Tracing
 {
     /// <summary>
     /// Configuration governing behaviour of <see cref="Tracer"/>.
@@ -9,13 +10,17 @@ namespace Vostok.Tracing.Configuration
     [PublicAPI]
     public class TracerSettings
     {
+        public TracerSettings([NotNull] ISpanSender sender)
+        {
+            Sender = sender ?? throw new ArgumentNullException(nameof(sender));
+        }
+
         /// <summary>
         /// <para>Gets or sets the sender used to offload constructed spans. See <see cref="ISpanSender"/> for more details.</para>
         /// <para>This configuration parameter is <b>required</b>: <c>null</c> values are not allowed.</para>
-        /// <para>Note that <see cref="DevNullSpanSender"/> is used by default and you should substitute it with a real implementation.</para>
         /// </summary>
         [NotNull]
-        public ISpanSender Sender { get; set; } = new DevNullSpanSender();
+        public ISpanSender Sender { get; }
 
         /// <summary>
         /// <para>Gets or sets the value that will be automatically set for <see cref="WellKnownAnnotations.Common.Host"/> annotation in spans.</para>

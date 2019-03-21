@@ -3,7 +3,6 @@ using FluentAssertions;
 using NSubstitute;
 using NUnit.Framework;
 using Vostok.Tracing.Abstractions;
-using Vostok.Tracing.Configuration;
 
 namespace Vostok.Tracing.Tests
 {
@@ -21,7 +20,7 @@ namespace Vostok.Tracing.Tests
         [SetUp]
         public void TestSetup()
         {
-            settings = new TracerSettings { Sender = Substitute.For<ISpanSender>() };
+            settings = new TracerSettings(Substitute.For<ISpanSender>());
 
             baseTracer = new Tracer(settings) { CurrentContext = null };
 

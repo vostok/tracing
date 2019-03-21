@@ -3,9 +3,8 @@ using FluentAssertions;
 using NUnit.Framework;
 using Vostok.Commons.Testing;
 using Vostok.Tracing.Abstractions;
-using Vostok.Tracing.Helpers;
 
-namespace Vostok.Tracing.Tests.Helpers
+namespace Vostok.Tracing.Tests
  {
      [TestFixture]
      public class TraceContextSerializer_Tests
