@@ -31,7 +31,7 @@ namespace Vostok.Tracing
 
         /// <summary>
         /// <para>Gets or sets the value that will be automatically set for <see cref="WellKnownAnnotations.Common.Application"/> annotation in spans.</para>
-        /// <para>This configuration parameter is <b>optional</b>: if it's value is <c>null</c>, corresponding annotation won't be added to spans.</para>
+        /// <para>This configuration parameter is <b>optional</b>: if it's value is <c>null</c>, current process name will be used as default value.</para>
         /// </summary>
         [CanBeNull]
         public string Application { get; set; }

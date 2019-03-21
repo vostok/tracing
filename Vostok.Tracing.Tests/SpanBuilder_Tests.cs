@@ -98,9 +98,9 @@ namespace Vostok.Tracing.Tests
         }
 
         [Test]
-        public void Should_not_set_application_annotation_for_span_upon_construction_when_not_configured_in_settings()
+        public void Should_set_application_annotation_with_default_value_for_span_upon_construction_when_not_configured_in_settings()
         {
-            builder.CurrentSpan.Annotations.ContainsKey(WellKnownAnnotations.Common.Application).Should().BeFalse();
+            builder.CurrentSpan.Annotations[WellKnownAnnotations.Common.Application].Should().NotBeNull();
         }
 
         [Test]
