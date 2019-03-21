@@ -6,7 +6,6 @@ using FluentAssertions.Extensions;
 using NSubstitute;
 using NUnit.Framework;
 using Vostok.Tracing.Abstractions;
-using Vostok.Tracing.Configuration;
 
 // ReSharper disable PossibleInvalidOperationException
 
@@ -31,8 +30,7 @@ namespace Vostok.Tracing.Tests
             sender = Substitute.For<ISpanSender>();
             sender.When(s => s.Send(Arg.Any<ISpan>())).Do(info => observedSpan = info.Arg<ISpan>());
 
-            settings = new TracerSettings { Sender = sender };
-
+            settings = new TracerSettings(sender);
             parentContext = new TraceContext(Guid.NewGuid(), Guid.NewGuid());
             currentContext = new TraceContext(parentContext.TraceId, Guid.NewGuid());
             contextScope = Substitute.For<IDisposable>();

@@ -4,7 +4,6 @@ using JetBrains.Annotations;
 using Vostok.Commons.Environment;
 using Vostok.Commons.Time;
 using Vostok.Tracing.Abstractions;
-using Vostok.Tracing.Configuration;
 using SpanAnnotations = Vostok.Commons.Collections.ImmutableArrayDictionary<string, object>;
 
 namespace Vostok.Tracing

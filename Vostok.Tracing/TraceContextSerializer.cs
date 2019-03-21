@@ -2,7 +2,7 @@
 using Vostok.Context;
 using Vostok.Tracing.Abstractions;
 
-namespace Vostok.Tracing.Helpers
+namespace Vostok.Tracing
 {
     internal class TraceContextSerializer : IContextSerializer<TraceContext>
     {

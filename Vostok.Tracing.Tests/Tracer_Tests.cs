@@ -1,10 +1,8 @@
 ﻿using System;
 using FluentAssertions;
 using NUnit.Framework;
-using Vostok.Commons.Testing;
 using Vostok.Context;
 using Vostok.Tracing.Abstractions;
-using Vostok.Tracing.Configuration;
 
 // ReSharper disable PossibleNullReferenceException
 // ReSharper disable AssignNullToNotNullAttribute
@@ -20,7 +18,7 @@ namespace Vostok.Tracing.Tests
         [SetUp]
         public void SetUp()
         {
-            settings = new TracerSettings();
+            settings = new TracerSettings(new DevNullSpanSender());
             tracer = new Tracer(settings);
 
             FlowingContext.Globals.Set(null as TraceContext);
@@ -41,15 +39,6 @@ namespace Vostok.Tracing.Tests
             FlowingContext.RestoreDistributedGlobals(serialized);
 
             FlowingContext.Globals.Get<TraceContext>().Should().BeEquivalentTo(context);
-        }
-
-        [Test]
-        public void Should_validate_settings_in_constructor()
-        {
-            new Action(() => new Tracer(new TracerSettings {Sender = null}))
-                .Should()
-                .Throw<Exception>()
-                .Which.ShouldBePrinted();
         }
 
         [Test]
