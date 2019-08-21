@@ -7,13 +7,13 @@ namespace Vostok.Tracing
     internal class TraceContextSerializer : IContextSerializer<TraceContext>
     {
         private const char Delimiter = ';';
-        private static char[] DelimiterArray = {Delimiter};
+        private static char[] delimiterArray = {Delimiter};
 
         public string Serialize(TraceContext value) => $"{value.TraceId}{Delimiter}{value.SpanId}";
 
         public TraceContext Deserialize(string input)
         {
-            var parts = input.Split(DelimiterArray, StringSplitOptions.RemoveEmptyEntries);
+            var parts = input.Split(delimiterArray, StringSplitOptions.RemoveEmptyEntries);
 
             if (parts.Length != 2 ||
                 !Guid.TryParse(parts[0], out var traceId) ||
