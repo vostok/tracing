@@ -63,6 +63,20 @@ namespace Vostok.Tracing.Tests
         }
 
         [Test]
+        public void CurrentContext_property_setter_should_set_null()
+        {
+            var context = new TraceContext(Guid.NewGuid(), Guid.NewGuid());
+
+            tracer.CurrentContext = context;
+
+            tracer.CurrentContext.Should().BeEquivalentTo(context);
+
+            tracer.CurrentContext = null;
+
+            tracer.CurrentContext.Should().BeNull();
+        }
+
+        [Test]
         public void BeginSpan_should_create_a_new_context_if_none_is_present()
         {
             tracer.CurrentContext.Should().BeNull();
