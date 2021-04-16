@@ -64,10 +64,14 @@ namespace Vostok.Tracing
             var beginTimestamp = PreciseDateTime.Now;
             var endTimestamp = DateTimeOffset.MinValue;
 
+            var parentSpanId = parentContext?.SpanId;
+            if (parentSpanId == Guid.Empty)
+                parentSpanId = null;
+
             return new SpanMetadata(
                 currentContext.TraceId,
                 currentContext.SpanId,
-                parentContext?.SpanId,
+                parentSpanId,
                 beginTimestamp,
                 endTimestamp);
         }
