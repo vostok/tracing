@@ -1,4 +1,4 @@
-## 0.1.2 (16-04-2020):
+## 0.1.2 (16-04-2021):
 
 Transform ParentSpanId = Guid.Empty into null. 
 
