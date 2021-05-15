@@ -42,5 +42,7 @@ namespace Vostok.Tracing
         /// </summary>
         [CanBeNull]
         public string Environment { get; set; }
+
+        public int InitialAnnotationsSize { get; set; } = 0;
     }
 }
