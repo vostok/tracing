@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using JetBrains.Annotations;
+using Vostok.Commons.Threading;
 using Vostok.Context;
 using Vostok.Tracing.Abstractions;
 
@@ -9,6 +12,10 @@ namespace Vostok.Tracing
     public class Tracer : ITracer
     {
         private const string DistributedGlobalName = "vostok.tracing.context";
+
+        private static Func<Guid> generateGuid = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+            ? (Func<Guid>)GenerateGuidForLinux
+            : GuidNewGuid;
 
         private readonly TracerSettings settings;
 
@@ -39,7 +46,29 @@ namespace Vostok.Tracing
         {
             oldContext = CurrentContext;
 
-            return FlowingContext.Globals.Use(newContext = new TraceContext(oldContext?.TraceId ?? Guid.NewGuid(), Guid.NewGuid()));
+            return FlowingContext.Globals.Use(newContext = new TraceContext(oldContext?.TraceId ?? generateGuid(), generateGuid()));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static unsafe Guid GenerateGuidForLinux()
+        {
+            var bytes = stackalloc byte[sizeof(Guid)];
+            var dst = bytes;
+
+            var j = 0;
+            for (var i = 0; i < 4; i++)
+            {
+                *(int*)dst = ThreadSafeRandom.Next();
+                dst += 4;
+            }
+
+            return *(Guid*)bytes;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Guid GuidNewGuid()
+        {
+            return Guid.NewGuid();
         }
     }
 }
