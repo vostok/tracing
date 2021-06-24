@@ -13,7 +13,7 @@ namespace Vostok.Tracing
     {
         private const string DistributedGlobalName = "vostok.tracing.context";
 
-        private static Func<Guid> generateGuid = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+        private static readonly Func<Guid> GenerateGuid = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
             ? (Func<Guid>)GenerateGuidForLinux
             : GuidNewGuid;
 
@@ -46,13 +46,13 @@ namespace Vostok.Tracing
         {
             oldContext = CurrentContext;
 
-            return FlowingContext.Globals.Use(newContext = new TraceContext(oldContext?.TraceId ?? generateGuid(), generateGuid()));
+            return FlowingContext.Globals.Use(newContext = new TraceContext(oldContext?.TraceId ?? GenerateGuid(), GenerateGuid()));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe Guid GenerateGuidForLinux()
         {
-            var bytes = stackalloc byte[sizeof(Guid)];
+            var bytes = stackalloc byte[16];
             var dst = bytes;
 
             var j = 0;
