@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using Vostok.Commons.Threading;
@@ -14,8 +13,8 @@ namespace Vostok.Tracing
         private const string DistributedGlobalName = "vostok.tracing.context";
 
         private static readonly Func<Guid> GenerateGuid = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-            ? (Func<Guid>)GenerateGuidForLinux
-            : GuidNewGuid;
+            ? (Func<Guid>)GuidGenerator.GenerateNotCryptoQualityGuid
+            : Guid.NewGuid;
 
         private readonly TracerSettings settings;
 
@@ -47,28 +46,6 @@ namespace Vostok.Tracing
             oldContext = CurrentContext;
 
             return FlowingContext.Globals.Use(newContext = new TraceContext(oldContext?.TraceId ?? GenerateGuid(), GenerateGuid()));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static unsafe Guid GenerateGuidForLinux()
-        {
-            var bytes = stackalloc byte[16];
-            var dst = bytes;
-
-            var random = ThreadSafeRandom.ObtainThreadStaticRandom();
-            for (var i = 0; i < 4; i++)
-            {
-                *(int*)dst = random.Next();
-                dst += 4;
-            }
-
-            return *(Guid*)bytes;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Guid GuidNewGuid()
-        {
-            return Guid.NewGuid();
         }
     }
 }

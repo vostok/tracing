@@ -32,6 +32,7 @@
     <Compile Include="..\..\vostok.commons.environment\Vostok.Commons.Environment\RuntimeDetector.cs" Link="Commons\RuntimeDetector.cs" />
     <Compile Include="..\..\vostok.commons.environment\Vostok.Commons.Environment\EnvironmentInfo.cs" Link="Commons\EnvironmentInfo.cs" />
     <Compile Include="..\..\vostok.commons.threading\Vostok.Commons.Threading\ThreadSafeRandom.cs" Link="Commons\ThreadSafeRandom.cs" />
+    <Compile Include="..\..\vostok.commons.threading\Vostok.Commons.Threading\GuidGenerator.cs" Link="Commons\GuidGenerator.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Vostok.Tracing.Abstractions">

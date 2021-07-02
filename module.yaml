@@ -16,7 +16,7 @@ notests *default:
     - vostok.commons.collections/src
     - vostok.commons.time/src
     - vostok.commons.environment/src
-    - vostok.commons.threading/src@obtain-random
+    - vostok.commons.threading/src
 
 full-build > notests:
   build:
