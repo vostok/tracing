@@ -1,3 +1,7 @@
+## 0.1.3 (20-07-2021):
+
+Optimize GUID creation on Linux
+
 ## 0.1.2 (16-04-2021):
 
 Transform ParentSpanId = Guid.Empty into null. 
