@@ -1,3 +1,7 @@
+## 0.1.4 (21-09-2021):
+
+Updated `EnvironmentInfo.Application` from `vostok.commons.environment` module.
+
 ## 0.1.3 (20-07-2021):
 
 Optimize GUID creation on Linux
