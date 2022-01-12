@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using JetBrains.Annotations;
 using Vostok.Commons.Threading;
 using Vostok.Context;
@@ -11,10 +10,6 @@ namespace Vostok.Tracing
     public class Tracer : ITracer
     {
         private const string DistributedGlobalName = "vostok.tracing.context";
-
-        private static readonly Func<Guid> GenerateGuid = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
-            ? (Func<Guid>)GuidGenerator.GenerateNotCryptoQualityGuid
-            : Guid.NewGuid;
 
         private readonly TracerSettings settings;
 
@@ -45,7 +40,7 @@ namespace Vostok.Tracing
         {
             oldContext = CurrentContext;
 
-            return FlowingContext.Globals.Use(newContext = new TraceContext(oldContext?.TraceId ?? GenerateGuid(), GenerateGuid()));
+            return FlowingContext.Globals.Use(newContext = new TraceContext(oldContext?.TraceId ?? GuidGenerator.GenerateNotCryptoQualityGuid(), GuidGenerator.GenerateNotCryptoQualityGuid()));
         }
     }
 }
