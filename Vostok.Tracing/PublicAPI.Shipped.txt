@@ -1,0 +1,19 @@
+static Vostok.Tracing.WithFlowingContextExtensions.WithAllFlowingContextProperties(this Vostok.Tracing.Abstractions.ITracer tracer, bool allowOverwrite = false, bool allowNullValues = false) -> Vostok.Tracing.Abstractions.ITracer
+static Vostok.Tracing.WithFlowingContextExtensions.WithFlowingContextGlobal<T>(this Vostok.Tracing.Abstractions.ITracer tracer, string annotationName, bool allowOverwrite = false, bool allowNullValues = false) -> Vostok.Tracing.Abstractions.ITracer
+static Vostok.Tracing.WithFlowingContextExtensions.WithFlowingContextProperties(this Vostok.Tracing.Abstractions.ITracer tracer, string[] names, bool allowOverwrite = false, bool allowNullValues = false) -> Vostok.Tracing.Abstractions.ITracer
+static Vostok.Tracing.WithFlowingContextExtensions.WithFlowingContextProperty(this Vostok.Tracing.Abstractions.ITracer tracer, string contextPropertyName, string annotationName = null, bool allowOverwrite = false, bool allowNullValues = false) -> Vostok.Tracing.Abstractions.ITracer
+Vostok.Tracing.Tracer
+Vostok.Tracing.Tracer.BeginSpan() -> Vostok.Tracing.Abstractions.ISpanBuilder
+Vostok.Tracing.Tracer.CurrentContext.get -> Vostok.Tracing.Abstractions.TraceContext
+Vostok.Tracing.Tracer.CurrentContext.set -> void
+Vostok.Tracing.Tracer.Tracer(Vostok.Tracing.TracerSettings settings) -> void
+Vostok.Tracing.TracerSettings
+Vostok.Tracing.TracerSettings.Application.get -> string
+Vostok.Tracing.TracerSettings.Application.set -> void
+Vostok.Tracing.TracerSettings.Environment.get -> string
+Vostok.Tracing.TracerSettings.Environment.set -> void
+Vostok.Tracing.TracerSettings.Host.get -> string
+Vostok.Tracing.TracerSettings.Host.set -> void
+Vostok.Tracing.TracerSettings.Sender.get -> Vostok.Tracing.Abstractions.ISpanSender
+Vostok.Tracing.TracerSettings.TracerSettings(Vostok.Tracing.Abstractions.ISpanSender sender) -> void
+Vostok.Tracing.WithFlowingContextExtensions
