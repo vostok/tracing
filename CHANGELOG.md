@@ -1,3 +1,7 @@
+## 0.1.8 (12-12-2024): 
+
+Bump NuGet deps versions
+
 ## 0.1.7 (13-01-2022):
 
 Optimize GUID creation in .Net 6. Optimize GUID creation in Windows.
