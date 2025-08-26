@@ -78,12 +78,18 @@ namespace Vostok.Tracing
 
         private static SpanAnnotations ConstructInitialAnnotations([NotNull] TracerSettings settings)
         {
-            var annotations = SpanAnnotations.Empty
-                .Set(WellKnownAnnotations.Common.Host, settings.Host ?? EnvironmentInfo.Host)
-                .Set(WellKnownAnnotations.Common.Application, settings.Application ?? EnvironmentInfo.Application);
+            //(deniaa): 16 annotations - is a common size (power of two) for a spans according to HttpRequest{XXX}SpanBuilder.
+            //(deniaa): There are spans for Cassandra with 18+ annotations, but it's still better to start with a capacity of 16 than the default 4.
+            //(deniaa): There are "empty" spans, but they rare and usually this is a bug.
+            var annotations = new SpanAnnotations(16);
+            
+            //(deniaa): We just create this ImmutableArrayDictionary and guarantee that we are single holder of this reference in this method.
+            //(deniaa): So here we can use AppendUnsafe method.
+            annotations.AppendUnsafe(WellKnownAnnotations.Common.Host, settings.Host ?? EnvironmentInfo.Host);
+            annotations.AppendUnsafe(WellKnownAnnotations.Common.Application, settings.Application ?? EnvironmentInfo.Application);
 
             if (settings.Environment != null)
-                annotations = annotations.Set(WellKnownAnnotations.Common.Environment, settings.Environment);
+                annotations.AppendUnsafe(WellKnownAnnotations.Common.Environment, settings.Environment);
 
             return annotations;
         }
