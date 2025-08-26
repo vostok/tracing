@@ -1,3 +1,7 @@
+## 0.1.9 (26-08-2025):
+
+Minor optimisation: pre-create a bigger ImmutableArrayDictionary for spans.
+
 ## 0.1.8 (12-12-2024): 
 
 Bump NuGet deps versions
